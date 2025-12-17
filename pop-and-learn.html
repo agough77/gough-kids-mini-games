@@ -1227,12 +1227,10 @@
     }
 
     function spawnObject() {
-        // No limit - spawn continuously one at a time
-        activeObjectCount++;
+        // Cap at 20 objects to prevent DOM bloat
+        if (activeObjectCount >= 20) return;
         
-        // Use requestAnimationFrame to defer heavy work and prevent spawn stutter
-        requestAnimationFrame(() => {
-            const obj = document.createElement('div');
+        const obj = document.createElement('div');
             const items = getCurrentLessonItems();
             
             // 40% chance to spawn the target item for balanced gameplay
@@ -1306,7 +1304,6 @@
             obj._handlers = { click: clickHandler, key: keyHandler };
             
             startObjectAnimation(obj, randomValue, objColor);
-        });
     }
     
     function startObjectAnimation(obj, randomValue, objColor) {
