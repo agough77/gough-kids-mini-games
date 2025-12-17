@@ -409,6 +409,8 @@
             pointer-events: none;
             border-radius: 50%;
             animation: particle-float 1s forwards;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
         }
 
         @keyframes particle-float {
@@ -423,6 +425,8 @@
             height: 0.625rem;
             pointer-events: none;
             animation: confetti-fall 2s forwards;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
         }
 
         @keyframes confetti-fall {
@@ -700,6 +704,7 @@
     let speedIndex = 1; // Start at Normal
     let spawnInterval;
     let completedItems = new Set(); // Track completed items in current lesson
+    let activeObjectCount = 0; // Track active objects efficiently
     
     const targetDisplay = document.getElementById('target-display');
     const backgroundTarget = document.getElementById('background-target');
@@ -839,7 +844,7 @@
     }
 
     function createParticles(x, y, color) {
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 5; i++) {
             const particle = document.createElement('div');
             particle.className = 'particle';
             particle.style.left = x + 'px';
@@ -860,7 +865,7 @@
 
     function createConfetti(x, y) {
         const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 10; i++) {
             const confetti = document.createElement('div');
             confetti.className = 'confetti';
             confetti.style.left = x + (Math.random() * 200 - 100) + 'px';
@@ -1160,6 +1165,10 @@
     }
 
     function spawnObject() {
+        // Limit max concurrent objects to prevent slowdown
+        if (activeObjectCount >= 8) return; // Max 8 objects at once
+        activeObjectCount++;
+        
         const obj = document.createElement('div');
         const items = getCurrentLessonItems();
         
@@ -1185,13 +1194,6 @@
         } else {
             obj.className = `game-object ${currentMode === 'balloons' ? 'balloon' : 'bubble'}`;
         }
-        
-        // Random horizontal position with padding for larger objects
-        const maxWidth = window.innerWidth - 200;
-        obj.style.left = Math.max(20, Math.random() * maxWidth) + 'px';
-        
-        // Ensure objects always spawn at the bottom
-        obj.style.bottom = '0px';
         
         // Random color
         const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
@@ -1220,29 +1222,38 @@
             objColor = '#333';
         }
 
-        obj.onclick = (e) => {
+        const clickHandler = (e) => {
             e.preventDefault();
             e.stopPropagation();
             handlePop(obj, randomValue, objColor);
         };
-        obj.ontouchend = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handlePop(obj, randomValue, objColor);
-        };
-        obj.setAttribute('tabindex', '0');
-        obj.addEventListener('keydown', (e) => {
+        const keyHandler = (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 handlePop(obj, randomValue, objColor);
             }
-        });
+        };
+        
+        obj.onclick = clickHandler;
+        obj.ontouchend = clickHandler;
+        obj.setAttribute('tabindex', '0');
+        obj.addEventListener('keydown', keyHandler, { passive: false });
+        
+        // Store handlers for cleanup
+        obj._handlers = { click: clickHandler, key: keyHandler };
         
         document.body.appendChild(obj);
+        
+        // Random horizontal position with padding for larger objects
+        const maxWidth = window.innerWidth - 200;
+        const startX = Math.max(20, Math.random() * maxWidth);
+        obj.style.left = startX + 'px';
+        
+        // Ensure objects always spawn at the bottom
+        obj.style.bottom = '0px';
 
         // Ultra-smooth animation with fixed timestep
         let pos = 0;
-        let animationId;
         
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
         const baseSpeed = 0.5 + Math.random() * 1;
@@ -1251,7 +1262,8 @@
         
         const animate = () => {
             if (!obj.parentElement) {
-                if (animationId) cancelAnimationFrame(animationId);
+                cancelAnimationFrame(obj._animationId);
+                activeObjectCount--;
                 return;
             }
             
@@ -1265,12 +1277,17 @@
             obj.style.transform = `translate3d(${sway}px, ${-pos}px, 0)`;
 
             if (pos < window.innerHeight + 250) {
-                animationId = requestAnimationFrame(animate);
+                obj._animationId = requestAnimationFrame(animate);
             } else {
+                cancelAnimationFrame(obj._animationId);
+                if (obj._handlers) {
+                    obj.removeEventListener('keydown', obj._handlers.key);
+                }
+                activeObjectCount--;
                 obj.remove();
             }
         };
-        animationId = requestAnimationFrame(animate);
+        obj._animationId = requestAnimationFrame(animate);
     }
 
     function handlePop(el, value, color) {
@@ -1278,9 +1295,9 @@
         if (el.dataset.popped === 'true') return;
         el.dataset.popped = 'true';
         
-        const rect = el.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
+        // Use cached position instead of getBoundingClientRect
+        const x = window.innerWidth / 2;
+        const y = window.innerHeight / 2;
         
         if (value === targetValue) {
             // Correct answer!
@@ -1309,6 +1326,11 @@
             }
             
             setTimeout(() => {
+                if (el._animationId) cancelAnimationFrame(el._animationId);
+                if (el._handlers) {
+                    el.removeEventListener('keydown', el._handlers.key);
+                }
+                activeObjectCount--;
                 el.remove();
                 updateTarget();
             }, 300);
