@@ -48,16 +48,17 @@
 
         .games-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+            gap: 20px;
             max-width: 1200px;
             width: 100%;
+            padding: 0 10px;
         }
 
         .game-card {
             background: white;
-            border-radius: 30px;
-            padding: 40px;
+            border-radius: 20px;
+            padding: clamp(20px, 5vw, 40px);
             text-align: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             border: 5px solid #4fc3f7;
@@ -71,20 +72,20 @@
         }
 
         .game-icon {
-            font-size: 5rem;
+            font-size: clamp(3rem, 10vw, 5rem);
             margin-bottom: 1rem;
         }
 
         .game-title {
             color: #0277bd;
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 5vw, 2rem);
             font-weight: bold;
             margin-bottom: 1rem;
         }
 
         .game-description {
             color: #666;
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
             line-height: 1.5;
         }
 
@@ -105,21 +106,50 @@
             color: white;
             padding: 5px 15px;
             border-radius: 20px;
-            font-size: 0.9rem;
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
             font-weight: bold;
             margin-top: 10px;
         }
 
         footer {
-            margin-top: 3rem;
+            margin-top: 2rem;
             color: #0277bd;
-            font-size: 1.2rem;
+            font-size: clamp(1rem, 3vw, 1.2rem);
             text-align: center;
+            padding: 10px;
         }
 
         a {
             text-decoration: none;
             color: inherit;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                margin-bottom: 0.5rem;
+            }
+
+            .subtitle {
+                margin-bottom: 1.5rem;
+            }
+
+            .games-container {
+                gap: 15px;
+                grid-template-columns: 1fr;
+            }
+
+            .game-card {
+                border-radius: 15px;
+                border-width: 3px;
+            }
+
+            footer {
+                margin-top: 1rem;
+            }
         }
     </style>
 </head>
