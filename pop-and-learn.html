@@ -292,21 +292,7 @@
             /* Landscape-specific adjustments only if needed */
         }
 
-        /* CSS Animation for floating up - GPU accelerated */
-        @keyframes float-up-slow {
-            from { transform: translateY(0); }
-            to { transform: translateY(-150vh); }
-        }
-        
-        @keyframes float-up-normal {
-            from { transform: translateY(0); }
-            to { transform: translateY(-150vh); }
-        }
-        
-        @keyframes float-up-fast {
-            from { transform: translateY(0); }
-            to { transform: translateY(-150vh); }
-        }
+        /* No CSS animations - using JS loop like raptor game */
 
         /* Game Objects */
         .game-object {
@@ -959,8 +945,16 @@
         speedNameDisplay.innerText = speedKeys[speedIndex];
         streakCount.innerText = streak;
         
+        // Clear animation tracking
+        gameObjects = [];
+        if (masterAnimationId) {
+            cancelAnimationFrame(masterAnimationId);
+            masterAnimationId = null;
+        }
+        
         updateLessonDisplay();
         updateTarget();
+        startMasterAnimationLoop(); // Start single animation loop like raptor game
         startSpawning();
         
         // Keyboard support
@@ -1316,43 +1310,72 @@
     }
     
     function startObjectAnimation(obj, randomValue, objColor) {
+        // Calculate rem size: 1rem = 1.5vmin, bubble is 11rem = 16.5vmin
+        const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
+        const remInPx = 1.5 * vmin;
+        const objectWidth = 11 * remInPx; // Bubble width (larger than balloon)
+        
         // Calculate random horizontal position - full screen width
         const screenWidth = window.innerWidth;
-        const objectWidth = Math.floor(screenWidth * 0.2);
-        const startX = Math.floor(Math.random() * (screenWidth - objectWidth));
+        const maxX = screenWidth - objectWidth;
+        const startX = Math.floor(Math.random() * Math.max(0, maxX));
         
-        // Set horizontal position only
-        obj.style.left = startX + 'px';
-        
-        // Apply CSS animation based on speed
+        // Get speed for this object
         const speedName = speedKeys[speedIndex];
-        const animationDurations = {
-            'Slow': '15s',
-            'Normal': '10s',
-            'Fast': '6s'
-        };
-        const duration = animationDurations[speedName];
-        const animationName = `float-up-${speedName.toLowerCase()}`;
+        const speeds = { 'Slow': 0.4, 'Normal': 0.7, 'Fast': 1.2 };
+        const speedY = speeds[speedName];
         
-        obj.style.animation = `${animationName} ${duration} linear forwards`;
+        // Store animation data on object
+        obj._animData = {
+            x: startX,
+            y: 0,
+            speedY: speedY
+        };
+        
+        // Set initial position using transform
+        obj.style.left = '0';
+        obj.style.transform = `translate3d(${startX}px, 0, 0)`;
         
         // Append to DOM
         const container = document.getElementById('game-objects-container');
         container.appendChild(obj);
         
-        // Remove when animation ends
-        obj.addEventListener('animationend', () => {
-            if (obj._handlers) {
-                obj.removeEventListener('keydown', obj._handlers.key);
-                obj.onclick = null;
-                obj.ontouchend = null;
-            }
-            obj.remove();
-            activeObjectCount--;
-        }, { once: true });
-
-        // Track for cleanup only
+        // Add to gameObjects array for master loop
+        gameObjects.push(obj);
+        
         activeObjectCount++;
+    }
+    
+    function startMasterAnimationLoop() {
+        function masterLoop() {
+            // Update all objects in one loop - like raptor game
+            for (let i = gameObjects.length - 1; i >= 0; i--) {
+                const obj = gameObjects[i];
+                if (!obj._animData) continue;
+                
+                // Move up
+                obj._animData.y -= obj._animData.speedY;
+                
+                // Update transform
+                obj.style.transform = `translate3d(${obj._animData.x}px, ${obj._animData.y}px, 0)`;
+                
+                // Remove if off screen
+                if (obj._animData.y < -window.innerHeight * 1.5) {
+                    if (obj._handlers) {
+                        obj.removeEventListener('keydown', obj._handlers.key);
+                        obj.onclick = null;
+                        obj.ontouchend = null;
+                    }
+                    obj.remove();
+                    gameObjects.splice(i, 1);
+                    activeObjectCount--;
+                }
+            }
+            
+            masterAnimationId = requestAnimationFrame(masterLoop);
+        }
+        
+        masterAnimationId = requestAnimationFrame(masterLoop);
     }
 
     function handlePop(el, value, color) {
