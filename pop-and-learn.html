@@ -669,7 +669,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.2</div>
+<div class="version-display">v1.0.4</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1275,10 +1275,9 @@
         const speed = 1 * currentSpeed; // Constant: Slow: 0.8, Normal: 1.5, Fast: 2.5
         
         const animate = () => {
-            if (!obj.parentElement) {
-                cancelAnimationFrame(obj._animationId);
-                activeObjectCount--;
-                return;
+            // Check if element still exists and hasn't been popped
+            if (!obj.parentElement || obj.dataset.popped === 'true') {
+                return; // Don't decrement here - already handled elsewhere
             }
             
             // Single fixed increment per frame - absolute minimum calculations
@@ -1290,9 +1289,11 @@
             if (pos < window.innerHeight + 250) {
                 obj._animationId = requestAnimationFrame(animate);
             } else {
-                cancelAnimationFrame(obj._animationId);
+                // Object reached top - cleanup ONCE
                 if (obj._handlers) {
                     obj.removeEventListener('keydown', obj._handlers.key);
+                    obj.onclick = null;
+                    obj.ontouchend = null;
                 }
                 activeObjectCount--;
                 obj.remove();
@@ -1305,6 +1306,12 @@
         // Prevent multiple pops on the same element
         if (el.dataset.popped === 'true') return;
         el.dataset.popped = 'true';
+        
+        // Immediately stop animation
+        if (el._animationId) {
+            cancelAnimationFrame(el._animationId);
+            el._animationId = null;
+        }
         
         // Use cached position instead of getBoundingClientRect
         const x = window.innerWidth / 2;
@@ -1337,7 +1344,6 @@
             }
             
             setTimeout(() => {
-                if (el._animationId) cancelAnimationFrame(el._animationId);
                 if (el._handlers) {
                     el.removeEventListener('keydown', el._handlers.key);
                 }
