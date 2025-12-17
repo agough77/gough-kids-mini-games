@@ -669,7 +669,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.1</div>
+<div class="version-display">v1.0.2</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1268,13 +1268,11 @@
         // Ensure objects always spawn at the bottom
         obj.style.bottom = '0px';
 
-        // Ultra-smooth animation with tiny fixed increments (60fps target)
+        // Ultra-smooth animation with consistent fixed increment
         let pos = 0;
         
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
-        const baseSpeed = 0.3 + Math.random() * 0.4; // Much smaller: 0.3-0.7 pixels per frame
-        const speed = baseSpeed * currentSpeed; // Slow: 0.24-0.56, Normal: 0.45-1.05, Fast: 0.75-1.75
-        const swayOffset = Math.random() * Math.PI * 2;
+        const speed = 1 * currentSpeed; // Constant: Slow: 0.8, Normal: 1.5, Fast: 2.5
         
         const animate = () => {
             if (!obj.parentElement) {
@@ -1283,14 +1281,11 @@
                 return;
             }
             
-            // Tiny fixed increment per frame for butter-smooth motion at 60fps
+            // Single fixed increment per frame - absolute minimum calculations
             pos += speed;
             
-            // Calculate gentle sway
-            const sway = Math.sin((pos + swayOffset) / 50) * 20;
-            
-            // Single transform update - this is the ONLY style change per frame
-            obj.style.transform = `translate3d(${sway}px, ${-pos}px, 0)`;
+            // Single transform update - ONLY vertical movement, no sway
+            obj.style.transform = `translate3d(0, ${-pos}px, 0)`;
 
             if (pos < window.innerHeight + 250) {
                 obj._animationId = requestAnimationFrame(animate);
