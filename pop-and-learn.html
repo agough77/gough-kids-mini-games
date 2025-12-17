@@ -292,6 +292,22 @@
             /* Landscape-specific adjustments only if needed */
         }
 
+        /* CSS Animation for floating up - GPU accelerated */
+        @keyframes float-up-slow {
+            from { transform: translateY(0); }
+            to { transform: translateY(-150vh); }
+        }
+        
+        @keyframes float-up-normal {
+            from { transform: translateY(0); }
+            to { transform: translateY(-150vh); }
+        }
+        
+        @keyframes float-up-fast {
+            from { transform: translateY(0); }
+            to { transform: translateY(-150vh); }
+        }
+
         /* Game Objects */
         .game-object {
             position: absolute;
@@ -681,7 +697,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.1.5</div>
+<div class="version-display">v2.0.0</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -945,7 +961,6 @@
         
         updateLessonDisplay();
         updateTarget();
-        startMasterAnimationLoop();
         startSpawning();
         
         // Keyboard support
@@ -983,47 +998,6 @@
         };
         
         spawnInterval = requestAnimationFrame(spawnLoop);
-    }
-
-    // MASTER ANIMATION LOOP - updates all objects in a single frame
-    function startMasterAnimationLoop() {
-        if (masterAnimationId) cancelAnimationFrame(masterAnimationId);
-        
-        const masterLoop = () => {
-            // Update all active objects in one pass
-            const toRemove = [];
-            
-            for (let i = 0; i < gameObjects.length; i++) {
-                const objData = gameObjects[i];
-                const obj = objData.element;
-                
-                // Check if should remove
-                if (!obj.parentElement || obj.dataset.popped === 'true' || objData.pos >= window.innerHeight + 250) {
-                    if (obj._handlers) {
-                        obj.removeEventListener('keydown', obj._handlers.key);
-                        obj.onclick = null;
-                        obj.ontouchend = null;
-                    }
-                    if (obj.parentElement) obj.remove();
-                    toRemove.push(i);
-                    activeObjectCount--;
-                    continue;
-                }
-                
-                // Update position - preserve horizontal, update vertical
-                objData.pos += objData.speed;
-                obj.style.transform = `translate3d(${objData.startX}px, ${-objData.pos}px, 0)`;
-            }
-            
-            // Remove marked objects after iteration
-            for (let i = toRemove.length - 1; i >= 0; i--) {
-                gameObjects.splice(toRemove[i], 1);
-            }
-            
-            masterAnimationId = requestAnimationFrame(masterLoop);
-        };
-        
-        masterAnimationId = requestAnimationFrame(masterLoop);
     }
 
     let currentShapeColor = '#e91e63'; // Store current shape color
@@ -1344,28 +1318,41 @@
     function startObjectAnimation(obj, randomValue, objColor) {
         // Calculate random horizontal position - full screen width
         const screenWidth = window.innerWidth;
-        // Objects are 10-11rem, at 1.5vmin base = approx 11rem max
-        // At 1.5vmin, 1rem ≈ 1.5% of min(vw,vh), so 11rem ≈ 16.5% of viewport
-        // Use conservative 20% of screen width as max object width
         const objectWidth = Math.floor(screenWidth * 0.2);
         const startX = Math.floor(Math.random() * (screenWidth - objectWidth));
         
-        // Set all positioning via transform only - no layout properties
-        obj.style.transform = `translate3d(${startX}px, 0, 0)`;
+        // Set horizontal position only
+        obj.style.left = startX + 'px';
+        
+        // Apply CSS animation based on speed
+        const speedName = speedKeys[speedIndex];
+        const animationDurations = {
+            'Slow': '15s',
+            'Normal': '10s',
+            'Fast': '6s'
+        };
+        const duration = animationDurations[speedName];
+        const animationName = `float-up-${speedName.toLowerCase()}`;
+        
+        obj.style.animation = `${animationName} ${duration} linear forwards`;
         
         // Append to DOM
         const container = document.getElementById('game-objects-container');
         container.appendChild(obj);
-
-        // Add to animation array
-        const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
         
-        gameObjects.push({
-            element: obj,
-            pos: 0,
-            speed: currentSpeed,
-            startX: startX
-        });
+        // Remove when animation ends
+        obj.addEventListener('animationend', () => {
+            if (obj._handlers) {
+                obj.removeEventListener('keydown', obj._handlers.key);
+                obj.onclick = null;
+                obj.ontouchend = null;
+            }
+            obj.remove();
+            activeObjectCount--;
+        }, { once: true });
+
+        // Track for cleanup only
+        activeObjectCount++;
     }
 
     function handlePop(el, value, color) {
