@@ -202,26 +202,45 @@
 
         .controls {
             position: absolute;
-            bottom: 20px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
             display: flex;
-            gap: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-width: 95vw;
+            justify-content: center;
+            padding: 10px;
         }
 
         button {
-            padding: 10px 20px;
-            font-size: 1rem;
+            padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 20px);
+            font-size: clamp(0.7rem, 2.5vw, 1rem);
             border-radius: 20px;
             border: none;
             background: #4fc3f7;
             color: white;
             cursor: pointer;
             font-weight: bold;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         button:active { transform: scale(0.95); }
+
+        @media (max-width: 768px) {
+            .controls {
+                bottom: 5px;
+                gap: 5px;
+                padding: 5px;
+            }
+            
+            button {
+                font-size: clamp(0.6rem, 2vw, 0.8rem);
+                padding: 6px 10px;
+            }
+        }
 
         /* Game Objects */
         .game-object {
