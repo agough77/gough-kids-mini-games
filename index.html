@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pop & Learn ABCs</title>
+    <title>Gough Kids Mini Games</title>
     <style>
-        :root {
-            --bg-color: #e0f7fa;
-            --balloon-color: #ff5252;
-            --bubble-color: rgba(174, 234, 255, 0.6);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(to top, 
                 #FFE5B4 0%,
@@ -24,1306 +21,146 @@
                 #87CEEB 80%,
                 #B0E0E6 100%);
             background-attachment: fixed;
-            background-size: 100% 100%;
-            user-select: none;
-            touch-action: manipulation;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Start Screen */
-        #start-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, 
-                #FFE5B4 0%,
-                #FFB347 20%,
-                #FF9A8B 40%,
-                #FF6FA0 60%,
-                #87CEEB 80%,
-                #B0E0E6 100%);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 1000;
+            justify-content: center;
+            padding: 20px;
+            user-select: none;
         }
 
-        #start-screen.hidden {
-            display: none;
-        }
-
-        #start-screen h1 {
-            font-size: clamp(3rem, 10vw, 6rem);
+        h1 {
             color: #0277bd;
-            margin-bottom: 3rem;
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            text-align: center;
+            margin-bottom: 1rem;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
         }
 
-        .start-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .start-button {
-            padding: 20px 60px;
-            font-size: clamp(1.5rem, 4vw, 2rem);
-            border-radius: 30px;
-            border: none;
-            background: #4fc3f7;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .start-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        .start-button:active {
-            transform: translateY(0);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .start-button.secondary {
-            background: #ff9800;
-        }
-
-        .start-button.disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .start-button.disabled:hover {
-            transform: none;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-        }
-
-        /* Player Selection Styles */
-        .player-section {
-            text-align: center;
-        }
-
-        .player-section h2 {
-            color: #0277bd;
-            font-size: clamp(1.5rem, 5vw, 2.5rem);
-            margin-bottom: 1.5rem;
-        }
-
-        #welcome-message {
-            color: #0277bd;
-            font-size: clamp(1.5rem, 5vw, 2.5rem);
-            margin-bottom: 1.5rem;
-        }
-
-        .existing-players {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            justify-content: center;
-            margin-bottom: 2rem;
-            max-width: 600px;
-        }
-
-        .player-button {
-            padding: 15px 30px;
-            font-size: 1.3rem;
-            border-radius: 25px;
-            border: 3px solid #4fc3f7;
-            background: white;
-            color: #0277bd;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.2s;
-        }
-
-        .player-button:hover {
-            background: #4fc3f7;
-            color: white;
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .name-input-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-
-        #player-name-input {
-            padding: 15px 25px;
-            font-size: 1.3rem;
-            border-radius: 25px;
-            border: 3px solid #4fc3f7;
-            text-align: center;
-            font-weight: bold;
-            width: 300px;
-            max-width: 80vw;
-        }
-
-        #player-name-input:focus {
-            outline: none;
-            border-color: #ff9800;
-            box-shadow: 0 0 10px rgba(79, 195, 247, 0.5);
-        }
-
-        #ui-layer {
-            position: absolute;
-            top: 20px;
-            width: 100%;
-            text-align: center;
-            z-index: 100;
-            pointer-events: none;
-        }
-
-        .instruction-card {
-            background: white;
-            padding: 15px 30px;
-            border-radius: 50px;
-            display: inline-block;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            border: 4px solid #4fc3f7;
-            pointer-events: auto;
-        }
-
-        h1 { margin: 0; color: #0277bd; font-size: 2rem; }
-        #target-display { font-weight: bold; color: #e91e63; font-size: 2.5rem; }
-
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            border-radius: 20px;
-            border: none;
-            background: #4fc3f7;
-            color: white;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        button:active { transform: scale(0.95); }
-
-        /* Game Objects */
-        .game-object {
-            position: absolute;
-            bottom: 0px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: clamp(2rem, 4vw, 4rem);
-            color: #333;
-            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
-            will-change: transform;
-            transform: translate3d(0, 0, 0);
-            z-index: 10;
-        }
-
-        /* Balloon Style */
-        .balloon {
-            width: clamp(100px, 15vw, 180px);
-            height: clamp(125px, 18vw, 220px);
-            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-            background-color: var(--balloon-color);
-            background: radial-gradient(circle at 30% 30%, 
-                rgba(255, 255, 255, 0.8), 
-                var(--balloon-color) 45%, 
-                rgba(0, 0, 0, 0.2));
-            box-shadow: 
-                inset -15px -15px 25px rgba(0,0,0,0.2),
-                inset 15px 15px 25px rgba(255,255,255,0.3),
-                0 8px 20px rgba(0,0,0,0.3);
-            position: relative;
-        }
-        .balloon::before {
-            content: "";
-            position: absolute;
-            top: 15%;
-            left: 20%;
-            width: 30%;
-            height: 35%;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            filter: blur(3px);
-        }
-
-        /* Bubble Style */
-        .bubble {
-            width: clamp(110px, 16vw, 200px);
-            height: clamp(110px, 16vw, 200px);
-            background: radial-gradient(circle at 35% 35%, 
-                rgba(255, 255, 255, 0.95), 
-                rgba(100, 200, 255, 0.6) 50%,
-                rgba(50, 150, 255, 0.8));
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 
-                0 0 20px rgba(100, 200, 255, 0.6),
-                inset -20px -20px 30px rgba(50, 150, 255, 0.3),
-                inset 15px 15px 20px rgba(255, 255, 255, 0.8),
-                0 5px 15px rgba(0, 100, 200, 0.4);
-            position: relative;
-        }
-        .bubble::before {
-            content: "";
-            position: absolute;
-            top: 15%;
-            left: 25%;
-            width: 30%;
-            height: 30%;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            filter: blur(2px);
-        }
-        .bubble::after {
-            content: "";
-            position: absolute;
-            bottom: 20%;
-            right: 25%;
-            width: 15%;
-            height: 15%;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            filter: blur(1px);
-        }
-        
-        @keyframes bubble-shimmer {
-            0% { filter: brightness(1); }
-            100% { filter: brightness(1.15); }
-        }
-
-        /* Floating Shape Style */
-        .floating-shape {
-            font-size: clamp(4rem, 8vw, 8rem);
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
-            z-index: 10;
-        }
-
-        .pop-effect {
-            animation: pop 0.3s forwards;
-        }
-
-        @keyframes pop {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.5; }
-            100% { transform: scale(0); opacity: 0; }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        .shake-effect {
-            animation: shake 0.3s;
-        }
-
-        /* Particles */
-        .particle {
-            position: absolute;
-            pointer-events: none;
-            border-radius: 50%;
-            animation: particle-float 1s forwards;
-        }
-
-        @keyframes particle-float {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-        }
-
-        /* Confetti */
-        .confetti {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            pointer-events: none;
-            animation: confetti-fall 2s forwards;
-        }
-
-        @keyframes confetti-fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-        }
-
-        /* Streak display */
-        .streak-display {
-            position: absolute;
-            top: 100px;
-            right: 20px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 3px solid #4caf50;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #4caf50;
-            z-index: 100;
-            transition: transform 0.3s;
-        }
-
-        .streak-display.pulse {
-            animation: pulse 0.5s;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-
-        .celebration-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 4rem;
-            font-weight: bold;
-            color: #4caf50;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-            pointer-events: none;
-            animation: celebrate 1s forwards;
-            z-index: 200;
-        }
-
-        @keyframes celebrate {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-        }
-
-        /* Lesson Items Display */
-        .lesson-items {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 15px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border: 3px solid #4fc3f7;
-            z-index: 100;
-        }
-
-        .lesson-item {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            background: #e3f2fd;
-            border-radius: 15px;
-            border: 2px solid #4fc3f7;
-            color: #0277bd;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .lesson-item.completed {
-            background: #c8e6c9;
-            border-color: #4caf50;
-            color: #2e7d32;
-        }
-
-        .lesson-item.completed::after {
-            content: "✓";
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 24px;
-            height: 24px;
-            background: #4caf50;
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        .color-block {
-            width: 100%;
-            height: 100%;
-            border-radius: 10px;
-        }
-
-        .balloon .color-block,
-        .bubble .color-block {
-            border-radius: 50%;
-            width: 70%;
-            height: 70%;
-        }
-
-        .background-target .color-block {
-            width: clamp(8rem, 25vw, 20rem);
-            height: clamp(8rem, 25vw, 20rem);
-            border-radius: 30px;
-            border: 5px solid;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        #target-display .color-block {
-            display: inline-block;
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 8px;
-            vertical-align: middle;
-            border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-
-        .lesson-info {
-            position: absolute;
-            top: 100px;
-            left: 20px;
-            background: white;
-            padding: 15px 25px;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 3px solid #ff9800;
-            font-size: 1.2rem;
-            font-weight: bold;
+        .subtitle {
             color: #ff9800;
-            z-index: 100;
-        }
-
-        /* Large Background Target Display */
-        .background-target {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: clamp(10rem, 30vw, 25rem);
-            font-weight: bold;
-            color: transparent;
-            -webkit-text-stroke: 3px rgba(0, 0, 0, 0.2);
-            text-stroke: 3px rgba(0, 0, 0, 0.2);
-            pointer-events: none;
-            z-index: 1;
+            font-size: clamp(1.2rem, 4vw, 2rem);
             text-align: center;
-            user-select: none;
+            margin-bottom: 3rem;
+            font-weight: bold;
         }
 
-        .background-target.shape-outline {
-            color: transparent;
-            -webkit-text-stroke: 5px rgba(0, 0, 0, 0.4);
-            text-stroke: 5px rgba(0, 0, 0, 0.4);
-            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.2));
-            -webkit-text-fill-color: transparent;
+        .games-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 5px solid #4fc3f7;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-title {
+            color: #0277bd;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .game-description {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+            border-color: #ccc;
+        }
+
+        .coming-soon:hover {
+            transform: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .coming-soon-badge {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        footer {
+            margin-top: 3rem;
+            color: #0277bd;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
         }
     </style>
 </head>
 <body>
+    <h1>🎮 Gough Kids Mini Games 🎮</h1>
+    <p class="subtitle">Fun Educational Games for Kids!</p>
 
-<!-- Start Screen -->
-<div id="start-screen">
-    <h1>🎈 Pop & Learn ABCs 🎈</h1>
-    
-    <!-- Player Selection Section -->
-    <div id="player-selection" class="player-section">
-        <h2>Who's Playing?</h2>
-        <div id="existing-players" class="existing-players">
-            <!-- Existing player buttons will appear here -->
+    <div class="games-container">
+        <a href="pop-and-learn.html">
+            <div class="game-card">
+                <div class="game-icon">🎈</div>
+                <div class="game-title">Pop & Learn ABCs</div>
+                <div class="game-description">
+                    Learn letters, numbers, colors, and shapes by popping balloons and bubbles!
+                    <br><br>
+                    Ages 1-3 • Multi-player
+                </div>
+            </div>
+        </a>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">🎯</div>
+            <div class="game-title">Coming Soon!</div>
+            <div class="game-description">
+                More fun games on the way!
+                <div class="coming-soon-badge">COMING SOON</div>
+            </div>
         </div>
-        <div class="name-input-section">
-            <input type="text" id="player-name-input" placeholder="Enter your name" maxlength="15">
-            <button class="start-button" onclick="selectPlayer()">Start!</button>
+
+        <div class="game-card coming-soon">
+            <div class="game-icon">🎨</div>
+            <div class="game-title">Coming Soon!</div>
+            <div class="game-description">
+                More fun games on the way!
+                <div class="coming-soon-badge">COMING SOON</div>
+            </div>
         </div>
     </div>
-    
-    <!-- Game Start Buttons (hidden until player selected) -->
-    <div id="game-start-buttons" class="start-buttons" style="display: none;">
-        <h2 id="welcome-message">Welcome!</h2>
-        <button class="start-button" onclick="startNewGame()">New Game</button>
-        <button id="continue-button" class="start-button secondary" onclick="continueGame()">Continue</button>
-        <button class="start-button" style="background: #999;" onclick="backToPlayerSelect()">← Back</button>
-    </div>
-</div>
 
-<div class="background-target" id="background-target">?</div>
-
-<div id="ui-layer">
-    <div class="instruction-card">
-        <h1>Pop the <span id="category-type">Letter</span> <span id="target-display">?</span></h1>
-    </div>
-</div>
-
-<div class="lesson-info" id="lesson-info">
-    📚 Lesson <span id="lesson-number">1</span>
-</div>
-
-<div class="streak-display" id="streak-display">
-    🔥 Streak: <span id="streak-count">0</span>
-</div>
-
-<div class="lesson-items" id="lesson-items">
-    <!-- Lesson items will be populated here -->
-</div>
-
-<div class="controls">
-    <button onclick="returnToMenu()">🏠 Menu</button>
-    <button onclick="prevLesson()">⬅️ Previous Lesson</button>
-    <button onclick="nextLesson()">Next Lesson ➡️</button>
-    <button onclick="changeMode('balloons')">🎈 Balloons</button>
-    <button onclick="changeMode('bubbles')">🫧 Bubbles</button>
-    <button onclick="changeCategory()">📚 Mode: <span id="category-name">ABCs</span></button>
-    <button onclick="changeSpeed()">⚡ Speed: <span id="speed-name">Normal</span></button>
-</div>
-
-<script>
-    const allCategories = {
-        'ABCs': 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-        'Numbers': '0123456789'.split(''),
-        'Colors': ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Brown', 'Black', 'White'],
-        'Shapes': ['●', '■', '▲', '▬', '⬭', '⬟', '⬢', '⬣', '◆', '★', '▮', '⊿', '◊', '▰', '⬬']
-    };
-
-    const speedSettings = {
-        'Slow': { interval: 2000, speed: 0.8 },
-        'Normal': { interval: 1500, speed: 1.5 },
-        'Fast': { interval: 1000, speed: 2.5 }
-    };
-
-    const encouragements = ['Great!', 'Awesome!', 'Perfect!', 'Amazing!', 'Fantastic!', 'Wonderful!', 'Excellent!'];
-
-    let currentCategoryKeys = Object.keys(allCategories);
-    let categoryIndex = 0;
-    let currentLesson = 0;
-    let itemsPerLesson = 5;
-    let currentMode = 'balloons';
-    let targetValue = '';
-    let streak = 0;
-    let speedKeys = Object.keys(speedSettings);
-    let speedIndex = 1; // Start at Normal
-    let spawnInterval;
-    let completedItems = new Set(); // Track completed items in current lesson
-    
-    const targetDisplay = document.getElementById('target-display');
-    const backgroundTarget = document.getElementById('background-target');
-    const categoryTypeDisplay = document.getElementById('category-type');
-    const categoryNameDisplay = document.getElementById('category-name');
-    const streakCount = document.getElementById('streak-count');
-    const streakDisplay = document.getElementById('streak-display');
-    const speedNameDisplay = document.getElementById('speed-name');
-    const lessonItemsContainer = document.getElementById('lesson-items');
-    const lessonNumberDisplay = document.getElementById('lesson-number');
-
-    const categoryTypes = {
-        'ABCs': 'Letter',
-        'Numbers': 'Number',
-        'Colors': 'Color',
-        'Shapes': 'Shape'
-    };
-
-    // Audio Context for sound effects
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-
-    function getCurrentLessonItems() {
-        const allItems = allCategories[currentCategoryKeys[categoryIndex]];
-        const startIndex = currentLesson * itemsPerLesson;
-        const endIndex = Math.min(startIndex + itemsPerLesson, allItems.length);
-        return allItems.slice(startIndex, endIndex);
-    }
-
-    function getMaxLessons() {
-        const allItems = allCategories[currentCategoryKeys[categoryIndex]];
-        return Math.ceil(allItems.length / itemsPerLesson);
-    }
-
-    function updateLessonDisplay() {
-        const items = getCurrentLessonItems();
-        lessonItemsContainer.innerHTML = '';
-        
-        items.forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'lesson-item';
-            if (completedItems.has(item)) {
-                itemDiv.classList.add('completed');
-            }
-            
-            if(currentCategoryKeys[categoryIndex] === 'Colors') {
-                const colorBlock = document.createElement('div');
-                colorBlock.className = 'color-block';
-                colorBlock.style.backgroundColor = item.toLowerCase();
-                itemDiv.appendChild(colorBlock);
-            } else {
-                itemDiv.innerText = item;
-            }
-            
-            lessonItemsContainer.appendChild(itemDiv);
-        });
-        
-        lessonNumberDisplay.innerText = currentLesson + 1;
-    }
-
-    function nextLesson() {
-        const maxLessons = getMaxLessons();
-        currentLesson = (currentLesson + 1) % maxLessons;
-        completedItems.clear();
-        updateLessonDisplay();
-        updateTarget();
-        streak = 0;
-        streakCount.innerText = streak;
-        saveProgress();
-    }
-
-    function prevLesson() {
-        const maxLessons = getMaxLessons();
-        currentLesson = (currentLesson - 1 + maxLessons) % maxLessons;
-        completedItems.clear();
-        updateLessonDisplay();
-        updateTarget();
-        streak = 0;
-        streakCount.innerText = streak;
-        saveProgress();
-    }
-
-    function playPopSound() {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    function playWrongSound() {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 200;
-        oscillator.type = 'sawtooth';
-        
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.15);
-    }
-
-    function playCelebrationSound() {
-        const frequencies = [523, 659, 784, 1047];
-        frequencies.forEach((freq, i) => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = freq;
-            oscillator.type = 'sine';
-            
-            const startTime = audioContext.currentTime + (i * 0.1);
-            gainNode.gain.setValueAtTime(0.15, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
-            
-            oscillator.start(startTime);
-            oscillator.stop(startTime + 0.2);
-        });
-    }
-
-    function createParticles(x, y, color) {
-        for (let i = 0; i < 8; i++) {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = x + 'px';
-            particle.style.top = y + 'px';
-            particle.style.backgroundColor = color;
-            particle.style.width = (5 + Math.random() * 10) + 'px';
-            particle.style.height = particle.style.width;
-            
-            const angle = (Math.PI * 2 * i) / 8;
-            const distance = 50 + Math.random() * 100;
-            particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
-            particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
-            
-            document.body.appendChild(particle);
-            setTimeout(() => particle.remove(), 1000);
-        }
-    }
-
-    function createConfetti(x, y) {
-        const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-        for (let i = 0; i < 20; i++) {
-            const confetti = document.createElement('div');
-            confetti.className = 'confetti';
-            confetti.style.left = x + (Math.random() * 200 - 100) + 'px';
-            confetti.style.top = y + 'px';
-            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.animationDelay = Math.random() * 0.3 + 's';
-            confetti.style.animationDuration = (1 + Math.random()) + 's';
-            
-            document.body.appendChild(confetti);
-            setTimeout(() => confetti.remove(), 2500);
-        }
-    }
-
-    function showCelebrationText(text, x, y) {
-        const celebText = document.createElement('div');
-        celebText.className = 'celebration-text';
-        celebText.innerText = text;
-        celebText.style.left = x + 'px';
-        celebText.style.top = y + 'px';
-        document.body.appendChild(celebText);
-        setTimeout(() => celebText.remove(), 1000);
-    }
-
-    function updateStreak(correct) {
-        if (correct) {
-            streak++;
-            streakCount.innerText = streak;
-            streakDisplay.classList.add('pulse');
-            setTimeout(() => streakDisplay.classList.remove('pulse'), 500);
-            
-            // Extra celebration at milestones
-            if (streak % 5 === 0 && streak > 0) {
-                playCelebrationSound();
-                createConfetti(window.innerWidth / 2, 100);
-            }
-        } else {
-            streak = 0;
-            streakCount.innerText = streak;
-        }
-    }
-
-    function initGame() {
-        // Update UI displays based on current state
-        categoryNameDisplay.innerText = currentCategoryKeys[categoryIndex];
-        speedNameDisplay.innerText = speedKeys[speedIndex];
-        streakCount.innerText = streak;
-        
-        updateLessonDisplay();
-        updateTarget();
-        startSpawning();
-        
-        // Keyboard support
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                // Clear all objects
-                document.querySelectorAll('.game-object').forEach(obj => obj.remove());
-            }
-        });
-    }
-
-    function startSpawning() {
-        if (spawnInterval) clearInterval(spawnInterval);
-        const currentSpeed = speedSettings[speedKeys[speedIndex]];
-        spawnInterval = setInterval(spawnObject, currentSpeed.interval);
-    }
-
-    let currentShapeColor = '#e91e63'; // Store current shape color
-    let currentPlayer = null; // Current player name
-
-    // Player Management Functions
-    function getAllPlayers() {
-        const playersData = localStorage.getItem('popAndLearnPlayers');
-        return playersData ? JSON.parse(playersData) : [];
-    }
-
-    function savePlayersList(players) {
-        localStorage.setItem('popAndLearnPlayers', JSON.stringify(players));
-    }
-
-    function selectPlayer() {
-        const nameInput = document.getElementById('player-name-input');
-        const name = nameInput.value.trim();
-        
-        if (!name) {
-            alert('Please enter a name!');
-            return;
-        }
-        
-        currentPlayer = name;
-        
-        // Add to players list if new
-        const players = getAllPlayers();
-        if (!players.includes(name)) {
-            players.push(name);
-            savePlayersList(players);
-        }
-        
-        showGameStartButtons();
-    }
-
-    function selectExistingPlayer(name) {
-        currentPlayer = name;
-        showGameStartButtons();
-    }
-
-    function showGameStartButtons() {
-        document.getElementById('player-selection').style.display = 'none';
-        document.getElementById('game-start-buttons').style.display = 'flex';
-        document.getElementById('welcome-message').innerText = `Welcome, ${currentPlayer}! 🎉`;
-        
-        // Check if this player has saved progress
-        const continueButton = document.getElementById('continue-button');
-        if (!hasPlayerProgress(currentPlayer)) {
-            continueButton.classList.add('disabled');
-            continueButton.onclick = null;
-        } else {
-            continueButton.classList.remove('disabled');
-            continueButton.onclick = continueGame;
-        }
-    }
-
-    function backToPlayerSelect() {
-        document.getElementById('game-start-buttons').style.display = 'none';
-        document.getElementById('player-selection').style.display = 'block';
-        document.getElementById('player-name-input').value = '';
-        currentPlayer = null;
-    }
-
-    function loadExistingPlayers() {
-        const players = getAllPlayers();
-        const container = document.getElementById('existing-players');
-        container.innerHTML = '';
-        
-        if (players.length > 0) {
-            players.forEach(player => {
-                const button = document.createElement('button');
-                button.className = 'player-button';
-                button.textContent = player;
-                button.onclick = () => selectExistingPlayer(player);
-                container.appendChild(button);
-            });
-        }
-    }
-
-    // Save/Load Functions (updated for per-player saves)
-    function getPlayerKey() {
-        return `popAndLearnProgress_${currentPlayer}`;
-    }
-
-    function saveProgress() {
-        if (!currentPlayer) return;
-        
-        const progress = {
-            categoryIndex: categoryIndex,
-            currentLesson: currentLesson,
-            completedItems: Array.from(completedItems),
-            streak: streak,
-            currentMode: currentMode,
-            speedIndex: speedIndex
-        };
-        localStorage.setItem(getPlayerKey(), JSON.stringify(progress));
-    }
-
-    function loadProgress() {
-        if (!currentPlayer) return null;
-        
-        const saved = localStorage.getItem(getPlayerKey());
-        if (saved) {
-            return JSON.parse(saved);
-        }
-        return null;
-    }
-
-    function hasPlayerProgress(playerName) {
-        const key = `popAndLearnProgress_${playerName}`;
-        return localStorage.getItem(key) !== null;
-    }
-
-    function hasSavedProgress() {
-        return hasPlayerProgress(currentPlayer);
-    }
-
-    function startNewGame() {
-        if (!currentPlayer) return;
-        
-        // Clear saved progress for this player
-        localStorage.removeItem(getPlayerKey());
-        // Reset game state
-        categoryIndex = 0;
-        currentLesson = 0;
-        completedItems.clear();
-        streak = 0;
-        speedIndex = 1;
-        currentMode = 'balloons';
-        // Hide start screen and start game
-        document.getElementById('start-screen').classList.add('hidden');
-        initGame();
-    }
-
-    function continueGame() {
-        const progress = loadProgress();
-        if (progress) {
-            categoryIndex = progress.categoryIndex || 0;
-            currentLesson = progress.currentLesson || 0;
-            completedItems = new Set(progress.completedItems || []);
-            streak = progress.streak || 0;
-            currentMode = progress.currentMode || 'balloons';
-            speedIndex = progress.speedIndex || 1;
-        }
-        // Hide start screen and start game
-        document.getElementById('start-screen').classList.add('hidden');
-        initGame();
-    }
-
-    // Check for saved progress on load
-    window.addEventListener('DOMContentLoaded', () => {
-        loadExistingPlayers();
-    });
-
-    function updateTarget() {
-        const items = getCurrentLessonItems();
-        targetValue = items[Math.floor(Math.random() * items.length)];
-        
-        // Update category type text
-        const categoryName = currentCategoryKeys[categoryIndex];
-        
-        if(categoryName === 'Shapes') {
-            // For shapes, show "Shape" plus the shape character
-            categoryTypeDisplay.innerText = 'Shape';
-            // Pick random color for this shape
-            const shapeColors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-            currentShapeColor = shapeColors[Math.floor(Math.random() * shapeColors.length)];
-            targetDisplay.innerText = targetValue;
-            backgroundTarget.innerText = targetValue;
-            backgroundTarget.classList.add('shape-outline');
-            targetDisplay.style.color = currentShapeColor;
-            backgroundTarget.style.color = currentShapeColor;
-        } else {
-            categoryTypeDisplay.innerText = categoryTypes[categoryName];
-        }
-        
-        if(categoryName === 'Colors') {
-            // Show color block instead of text
-            targetDisplay.innerHTML = `<div class="color-block" style="background-color: ${targetValue.toLowerCase()};"></div>`;
-            const bgColorBlock = document.createElement('div');
-            bgColorBlock.className = 'color-block';
-            bgColorBlock.style.borderColor = targetValue.toLowerCase();
-            bgColorBlock.style.backgroundColor = `rgba(${hexToRgb(targetValue.toLowerCase())}, 0.6)`; // 60% opacity fill
-            backgroundTarget.innerHTML = '';
-            backgroundTarget.classList.remove('shape-outline');
-            backgroundTarget.appendChild(bgColorBlock);
-        } else if(categoryName !== 'Shapes') {
-            targetDisplay.innerText = targetValue;
-            backgroundTarget.innerText = targetValue;
-            backgroundTarget.classList.remove('shape-outline');
-            targetDisplay.style.color = '#e91e63';
-        }
-    }
-
-    function hexToRgb(colorName) {
-        const colors = {
-            'red': '255, 0, 0',
-            'blue': '0, 0, 255',
-            'green': '0, 128, 0',
-            'yellow': '255, 255, 0',
-            'purple': '128, 0, 128',
-            'orange': '255, 165, 0',
-            'pink': '255, 192, 203',
-            'brown': '165, 42, 42',
-            'black': '0, 0, 0',
-            'white': '255, 255, 255'
-        };
-        return colors[colorName] || '0, 0, 0';
-    }
-
-    function hexToRgb(colorName) {
-        const colors = {
-            'red': '255, 0, 0',
-            'blue': '0, 0, 255',
-            'green': '0, 128, 0',
-            'yellow': '255, 255, 0',
-            'purple': '128, 0, 128',
-            'orange': '255, 165, 0',
-            'pink': '255, 192, 203',
-            'brown': '165, 42, 42',
-            'black': '0, 0, 0',
-            'white': '255, 255, 255'
-        };
-        return colors[colorName] || '0, 0, 0';
-    }
-
-    function spawnObject() {
-        const obj = document.createElement('div');
-        const items = getCurrentLessonItems();
-        const randomValue = items[Math.floor(Math.random() * items.length)];
-        
-        // For shapes mode, just show the shape directly
-        if(currentCategoryKeys[categoryIndex] === 'Shapes') {
-            obj.className = 'game-object floating-shape';
-            obj.innerText = randomValue;
-            // Use the current shape color if it matches the target, otherwise random color
-            if(randomValue === targetValue) {
-                obj.style.color = currentShapeColor;
-            } else {
-                const shapeColors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-                obj.style.color = shapeColors[Math.floor(Math.random() * shapeColors.length)];
-            }
-        } else {
-            obj.className = `game-object ${currentMode === 'balloons' ? 'balloon' : 'bubble'}`;
-        }
-        
-        // Random horizontal position with padding for larger objects
-        const maxWidth = window.innerWidth - 200;
-        obj.style.left = Math.max(20, Math.random() * maxWidth) + 'px';
-        
-        // Random color
-        const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-        let objColor;
-        
-        if(currentCategoryKeys[categoryIndex] === 'Colors') {
-            // For colors mode, make the balloon/bubble the actual color with proper styling
-            objColor = randomValue.toLowerCase();
-            
-            if(currentMode === 'balloons') {
-                obj.style.background = `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), ${objColor} 45%, rgba(0, 0, 0, 0.2))`;
-            } else {
-                // Bubble mode - create colored bubble
-                obj.style.background = `radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95), ${objColor} 50%, ${objColor})`;
-                obj.style.borderColor = `rgba(255, 255, 255, 0.9)`;
-            }
-        } else if(currentCategoryKeys[categoryIndex] !== 'Shapes') {
-            // For other modes (not shapes), random color with text
-            objColor = colors[Math.floor(Math.random() * colors.length)];
-            if(currentMode === 'balloons') {
-                obj.style.backgroundColor = objColor;
-            }
-            obj.innerText = randomValue;
-        } else {
-            // For shapes, just use a neutral color for tracking
-            objColor = '#333';
-        }
-
-        obj.onclick = () => handlePop(obj, randomValue, objColor);
-        obj.setAttribute('tabindex', '0');
-        obj.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handlePop(obj, randomValue, objColor);
-            }
-        });
-        
-        document.body.appendChild(obj);
-
-        // Optimized animation using transforms with bounce physics
-        let pos = 0;
-        let horizontalPos = 0;
-        let velocityX = 0;
-        const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
-        const baseSpeed = 0.5 + Math.random() * 1;
-        const speed = baseSpeed * currentSpeed;
-        const swayOffset = Math.random() * Math.PI * 2;
-        let animationId;
-        let lastTime = performance.now();
-        
-        // Get background target bounds for collision detection
-        const getTargetBounds = () => {
-            const target = document.getElementById('background-target');
-            if (!target || !target.offsetWidth) return null;
-            const rect = target.getBoundingClientRect();
-            return {
-                left: rect.left - 50, // Add padding for collision
-                right: rect.right + 50,
-                top: rect.top - 50,
-                bottom: rect.bottom + 50
-            };
-        };
-        
-        const animate = (currentTime) => {
-            if (!obj.parentElement) {
-                if (animationId) cancelAnimationFrame(animationId);
-                return;
-            }
-            
-            const deltaTime = currentTime - lastTime;
-            lastTime = currentTime;
-            
-            const cappedDelta = Math.min(deltaTime, 50);
-            pos += (speed * cappedDelta) / 16.67;
-            
-            // Calculate sway
-            const sway = Math.sin((pos + swayOffset) / 50) * 20;
-            horizontalPos = sway + velocityX;
-            
-            // Check collision with background target
-            const targetBounds = getTargetBounds();
-            if (targetBounds) {
-                const objRect = obj.getBoundingClientRect();
-                const objCenterX = objRect.left + objRect.width / 2;
-                const objCenterY = objRect.top + objRect.height / 2;
-                
-                // Check if object is colliding with target
-                if (objCenterX > targetBounds.left && objCenterX < targetBounds.right &&
-                    objCenterY > targetBounds.top && objCenterY < targetBounds.bottom) {
-                    
-                    // Determine bounce direction based on which side hit
-                    const targetCenterX = (targetBounds.left + targetBounds.right) / 2;
-                    const targetCenterY = (targetBounds.top + targetBounds.bottom) / 2;
-                    
-                    // Calculate angle from target center to object
-                    const dx = objCenterX - targetCenterX;
-                    const dy = objCenterY - targetCenterY;
-                    
-                    // Bounce horizontally
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        velocityX = dx > 0 ? 3 : -3;
-                    } else {
-                        velocityX = dx > 0 ? 2 : -2;
-                    }
-                    
-                    // Add some randomness to bounce
-                    velocityX += (Math.random() - 0.5) * 2;
-                }
-            }
-            
-            // Decay horizontal velocity
-            velocityX *= 0.98;
-            
-            // Single transform update
-            obj.style.transform = `translate3d(${horizontalPos}px, ${-pos}px, 0)`;
-
-            if (pos < window.innerHeight + 250) {
-                animationId = requestAnimationFrame(animate);
-            } else {
-                obj.remove();
-            }
-        };
-        animationId = requestAnimationFrame(animate);
-    }
-
-    function handlePop(el, value, color) {
-        const rect = el.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-        
-        if (value === targetValue) {
-            // Correct answer!
-            el.classList.add('pop-effect');
-            playPopSound();
-            createParticles(x, y, color);
-            
-            const encouragement = encouragements[Math.floor(Math.random() * encouragements.length)];
-            showCelebrationText(encouragement, x, y);
-            
-            updateStreak(true);
-            
-            // Mark item as completed
-            if (!completedItems.has(value)) {
-                completedItems.add(value);
-                updateLessonDisplay();
-                saveProgress();
-                
-                // Check if lesson is complete
-                const lessonItems = getCurrentLessonItems();
-                if (completedItems.size === lessonItems.length) {
-                    setTimeout(() => {
-                        showLessonComplete();
-                    }, 500);
-                }
-            }
-            
-            setTimeout(() => {
-                el.remove();
-                updateTarget();
-            }, 300);
-        } else {
-            // Wrong answer
-            playWrongSound();
-            el.classList.add('shake-effect');
-            const originalColor = el.style.backgroundColor;
-            el.style.backgroundColor = '#333';
-            updateStreak(false);
-            
-            setTimeout(() => {
-                el.style.backgroundColor = originalColor;
-                el.classList.remove('shake-effect');
-            }, 300);
-        }
-    }
-
-    function showLessonComplete() {
-        playCelebrationSound();
-        createConfetti(window.innerWidth / 2, window.innerHeight / 2);
-        showCelebrationText('Lesson Complete! 🎉', window.innerWidth / 2, window.innerHeight / 2);
-    }
-
-    function returnToMenu() {
-        // Save progress
-        saveProgress();
-        // Stop spawning objects
-        if (spawnInterval) clearInterval(spawnInterval);
-        // Clear all existing objects
-        document.querySelectorAll('.game-object').forEach(obj => obj.remove());
-        // Show start screen with player selection
-        document.getElementById('start-screen').classList.remove('hidden');
-        document.getElementById('game-start-buttons').style.display = 'none';
-        document.getElementById('player-selection').style.display = 'block';
-        document.getElementById('player-name-input').value = '';
-        // Reload player list in case there are new players
-        loadExistingPlayers();
-        // Reset current player
-        currentPlayer = null;
-    }
-
-    function changeMode(mode) {
-        currentMode = mode;
-        saveProgress();
-    }
-
-    function changeCategory() {
-        categoryIndex = (categoryIndex + 1) % currentCategoryKeys.length;
-        categoryNameDisplay.innerText = currentCategoryKeys[categoryIndex];
-        currentLesson = 0;
-        completedItems.clear();
-        updateLessonDisplay();
-        updateTarget();
-        streak = 0;
-        streakCount.innerText = streak;
-        saveProgress();
-    }
-
-    function changeSpeed() {
-        speedIndex = (speedIndex + 1) % speedKeys.length;
-        speedNameDisplay.innerText = speedKeys[speedIndex];
-        startSpawning();
-        saveProgress();
-    }
-
-    // Don't auto-start - wait for start screen
-    // initGame() is now called by startNewGame() or continueGame()
-</script>
-
+    <footer>
+        Made with ❤️ for the Gough Kids
+    </footer>
 </body>
 </html>
