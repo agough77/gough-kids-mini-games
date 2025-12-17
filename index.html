@@ -11,6 +11,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            font-size: 1.5vmin;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(to top, 
@@ -26,66 +30,66 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 1.25rem;
             user-select: none;
         }
 
         h1 {
             color: #0277bd;
-            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-size: 4rem;
             text-align: center;
             margin-bottom: 1rem;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+            text-shadow: 0.2rem 0.2rem 0.4rem rgba(0,0,0,0.2);
         }
 
         .subtitle {
             color: #ff9800;
-            font-size: clamp(1.2rem, 4vw, 2rem);
+            font-size: 1.5rem;
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
             font-weight: bold;
         }
 
         .games-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-            gap: 20px;
-            max-width: 1200px;
+            grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+            gap: 1.25rem;
+            max-width: 80rem;
             width: 100%;
-            padding: 0 10px;
+            padding: 0 0.625rem;
         }
 
         .game-card {
             background: white;
-            border-radius: 20px;
-            padding: clamp(20px, 5vw, 40px);
+            border-radius: 1.25rem;
+            padding: 2rem;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border: 5px solid #4fc3f7;
+            box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.2);
+            border: 0.3rem solid #4fc3f7;
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
         }
 
         .game-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            transform: translateY(-0.625rem);
+            box-shadow: 0 1rem 2.5rem rgba(0,0,0,0.3);
         }
 
         .game-icon {
-            font-size: clamp(3rem, 10vw, 5rem);
+            font-size: 4rem;
             margin-bottom: 1rem;
         }
 
         .game-title {
             color: #0277bd;
-            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 1rem;
         }
 
         .game-description {
             color: #666;
-            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            font-size: 1rem;
             line-height: 1.5;
         }
 
@@ -97,26 +101,26 @@
 
         .coming-soon:hover {
             transform: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.2);
         }
 
         .coming-soon-badge {
             display: inline-block;
             background: #ff9800;
             color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            padding: 0.3rem 1rem;
+            border-radius: 1.25rem;
+            font-size: 0.8rem;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 0.625rem;
         }
 
         footer {
             margin-top: 2rem;
             color: #0277bd;
-            font-size: clamp(1rem, 3vw, 1.2rem);
+            font-size: 1.1rem;
             text-align: center;
-            padding: 10px;
+            padding: 0.625rem;
         }
 
         a {
