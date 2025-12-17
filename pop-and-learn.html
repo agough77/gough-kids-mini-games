@@ -297,6 +297,8 @@
             will-change: transform;
             transform: translate3d(0, 0, 0);
             z-index: 10;
+            backface-visibility: hidden;
+            perspective: 1000px;
         }
 
         /* Balloon Style */
@@ -1078,7 +1080,14 @@
 
     function updateTarget() {
         const items = getCurrentLessonItems();
-        targetValue = items[Math.floor(Math.random() * items.length)];
+        
+        // Only pick from items not yet completed
+        const remainingItems = items.filter(item => !completedItems.has(item));
+        
+        // If all items completed, this will be called from showLessonComplete anyway
+        if (remainingItems.length === 0) return;
+        
+        targetValue = remainingItems[Math.floor(Math.random() * remainingItems.length)];
         
         // Update category type text
         const categoryName = currentCategoryKeys[categoryIndex];
@@ -1171,6 +1180,9 @@
         // Random horizontal position with padding for larger objects
         const maxWidth = window.innerWidth - 200;
         obj.style.left = Math.max(20, Math.random() * maxWidth) + 'px';
+        
+        // Ensure objects always spawn at the bottom
+        obj.style.bottom = '0px';
         
         // Random color
         const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
@@ -1363,6 +1375,11 @@
         playCelebrationSound();
         createConfetti(window.innerWidth / 2, window.innerHeight / 2);
         showCelebrationText('Lesson Complete! 🎉', window.innerWidth / 2, window.innerHeight / 2);
+        
+        // Auto-advance to next lesson after 2 seconds
+        setTimeout(() => {
+            nextLesson();
+        }, 2000);
     }
 
     function toggleControls() {
