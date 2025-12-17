@@ -681,7 +681,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.1.1</div>
+<div class="version-display">v1.1.2</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1010,9 +1010,9 @@
                     continue;
                 }
                 
-                // Update position - single style change
+                // Update position - single style change with horizontal position preserved
                 objData.pos += objData.speed;
-                obj.style.transform = `translate3d(0, ${-objData.pos}px, 0)`;
+                obj.style.transform = `translate3d(${objData.startX}px, ${-objData.pos}px, 0)`;
             }
             
             // Remove marked objects after iteration
@@ -1342,28 +1342,30 @@
     }
     
     function startObjectAnimation(obj, randomValue, objColor) {
-        // Set ALL styles BEFORE appending to prevent layout thrashing
+        // Use transform for ALL positioning to avoid layout calculations
         // Random horizontal position across full screen width
-        const objectWidth = 150; // Actual max object width
-        const padding = 10; // Small edge padding
-        const minX = padding;
-        const maxX = window.innerWidth - objectWidth - padding;
-        const startX = minX + (Math.random() * (maxX - minX)); // Evenly distribute
-        obj.style.left = startX + 'px';
+        const objectWidth = 150;
+        const screenWidth = window.innerWidth;
+        const maxX = screenWidth - objectWidth;
+        const startX = Math.random() * maxX;
+        
+        // Set initial position using transform only
         obj.style.bottom = '0px';
-        obj.style.transform = 'translate3d(0, 0, 0)'; // Initialize transform
+        obj.style.left = '0px'; // Start at 0, use transform for actual position
+        obj.style.transform = `translate3d(${startX}px, 0, 0)`;
         
         // Append to dedicated container AFTER all styles are set
         document.getElementById('game-objects-container').appendChild(obj);
 
-        // Add to master animation array instead of individual loop
+        // Add to master animation array
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
-        const speed = 1 * currentSpeed; // Constant: Slow: 0.8, Normal: 1.5, Fast: 2.5
+        const speed = 1 * currentSpeed;
         
         gameObjects.push({
             element: obj,
             pos: 0,
-            speed: speed
+            speed: speed,
+            startX: startX // Store horizontal position
         });
     }
 
