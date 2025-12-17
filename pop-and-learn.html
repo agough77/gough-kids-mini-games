@@ -681,7 +681,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.1.3</div>
+<div class="version-display">v1.1.4</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1010,9 +1010,15 @@
                     continue;
                 }
                 
-                // Update position - single style change with horizontal position preserved
+                // Update position - preserve horizontal, update vertical
                 objData.pos += objData.speed;
-                obj.style.transform = `translate3d(${objData.startX}px, ${-objData.pos}px, 0)`;
+                const transformValue = `translate3d(${objData.startX}px, ${-objData.pos}px, 0)`;
+                obj.style.transform = transformValue;
+                
+                // Debug first few frames
+                if (i === 0 && objData.pos < 100) {
+                    console.log(`Obj 0: transform = ${transformValue}, computed = ${getComputedStyle(obj).transform}`);
+                }
             }
             
             // Remove marked objects after iteration
