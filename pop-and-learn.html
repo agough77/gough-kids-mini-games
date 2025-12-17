@@ -681,7 +681,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.9</div>
+<div class="version-display">v1.1.0</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -733,6 +733,8 @@
     let spawnInterval;
     let completedItems = new Set(); // Track completed items in current lesson
     let activeObjectCount = 0; // Track active objects efficiently
+    let gameObjects = []; // Array to track all active objects for single animation loop
+    let masterAnimationId = null; // Single master animation loop
     
     const targetDisplay = document.getElementById('target-display');
     const backgroundTarget = document.getElementById('background-target');
@@ -943,6 +945,7 @@
         
         updateLessonDisplay();
         updateTarget();
+        startMasterAnimationLoop();
         startSpawning();
         
         // Keyboard support
@@ -980,6 +983,46 @@
         };
         
         spawnInterval = requestAnimationFrame(spawnLoop);
+    }
+
+    // MASTER ANIMATION LOOP - updates all objects in a single frame
+    function startMasterAnimationLoop() {
+        if (masterAnimationId) cancelAnimationFrame(masterAnimationId);
+        
+        const masterLoop = () => {
+            // Update all active objects
+            for (let i = gameObjects.length - 1; i >= 0; i--) {
+                const objData = gameObjects[i];
+                const obj = objData.element;
+                
+                // Check if should remove
+                if (!obj.parentElement || obj.dataset.popped === 'true') {
+                    gameObjects.splice(i, 1);
+                    activeObjectCount--;
+                    continue;
+                }
+                
+                // Update position
+                objData.pos += objData.speed;
+                obj.style.transform = `translate3d(0, ${-objData.pos}px, 0)`;
+                
+                // Remove if off screen
+                if (objData.pos >= window.innerHeight + 250) {
+                    if (obj._handlers) {
+                        obj.removeEventListener('keydown', obj._handlers.key);
+                        obj.onclick = null;
+                        obj.ontouchend = null;
+                    }
+                    obj.remove();
+                    gameObjects.splice(i, 1);
+                    activeObjectCount--;
+                }
+            }
+            
+            masterAnimationId = requestAnimationFrame(masterLoop);
+        };
+        
+        masterAnimationId = requestAnimationFrame(masterLoop);
     }
 
     let currentShapeColor = '#e91e63'; // Store current shape color
@@ -1299,9 +1342,10 @@
     
     function startObjectAnimation(obj, randomValue, objColor) {
         // Set ALL styles BEFORE appending to prevent layout thrashing
-        // Random horizontal position with padding for larger objects
-        const maxWidth = window.innerWidth - 200;
-        const startX = Math.max(20, Math.random() * maxWidth);
+        // Random horizontal position across full screen width
+        const objectWidth = 200; // Max object width
+        const maxX = window.innerWidth - objectWidth;
+        const startX = Math.random() * maxX; // 0 to maxX
         obj.style.left = startX + 'px';
         obj.style.bottom = '0px';
         obj.style.transform = 'translate3d(0, 0, 0)'; // Initialize transform
@@ -1309,38 +1353,15 @@
         // Append to dedicated container AFTER all styles are set
         document.getElementById('game-objects-container').appendChild(obj);
 
-        // Ultra-smooth animation with consistent fixed increment
-        let pos = 0;
-        
+        // Add to master animation array instead of individual loop
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
         const speed = 1 * currentSpeed; // Constant: Slow: 0.8, Normal: 1.5, Fast: 2.5
         
-        const animate = () => {
-            // Check if element still exists and hasn't been popped
-            if (!obj.parentElement || obj.dataset.popped === 'true') {
-                return; // Don't decrement here - already handled elsewhere
-            }
-            
-            // Single fixed increment per frame - absolute minimum calculations
-            pos += speed;
-            
-            // Single transform update - ONLY vertical movement, no sway
-            obj.style.transform = `translate3d(0, ${-pos}px, 0)`;
-
-            if (pos < window.innerHeight + 250) {
-                obj._animationId = requestAnimationFrame(animate);
-            } else {
-                // Object reached top - cleanup ONCE
-                if (obj._handlers) {
-                    obj.removeEventListener('keydown', obj._handlers.key);
-                    obj.onclick = null;
-                    obj.ontouchend = null;
-                }
-                activeObjectCount--;
-                obj.remove();
-            }
-        };
-        obj._animationId = requestAnimationFrame(animate);
+        gameObjects.push({
+            element: obj,
+            pos: 0,
+            speed: speed
+        });
     }
 
     function handlePop(el, value, color) {
