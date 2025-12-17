@@ -680,9 +680,9 @@
     };
 
     const speedSettings = {
-        'Slow': { interval: 2000, speed: 0.8 },
-        'Normal': { interval: 1500, speed: 1.5 },
-        'Fast': { interval: 1000, speed: 2.5 }
+        'Slow': { interval: 1000, speed: 0.8 },
+        'Normal': { interval: 700, speed: 1.5 },
+        'Fast': { interval: 500, speed: 2.5 }
     };
 
     const encouragements = ['Great!', 'Awesome!', 'Perfect!', 'Amazing!', 'Fantastic!', 'Wonderful!', 'Excellent!'];
@@ -1160,7 +1160,14 @@
     function spawnObject() {
         const obj = document.createElement('div');
         const items = getCurrentLessonItems();
-        const randomValue = items[Math.floor(Math.random() * items.length)];
+        
+        // 60% chance to spawn the target item for easier gameplay
+        let randomValue;
+        if (Math.random() < 0.6) {
+            randomValue = targetValue;
+        } else {
+            randomValue = items[Math.floor(Math.random() * items.length)];
+        }
         
         // For shapes mode, just show the shape directly
         if(currentCategoryKeys[categoryIndex] === 'Shapes') {
@@ -1231,29 +1238,15 @@
         
         document.body.appendChild(obj);
 
-        // Optimized animation using transforms with bounce physics
+        // Optimized animation - smooth floating with sway
         let pos = 0;
-        let horizontalPos = 0;
-        let velocityX = 0;
+        let animationId;
+        let lastTime = performance.now();
+        
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
         const baseSpeed = 0.5 + Math.random() * 1;
         const speed = baseSpeed * currentSpeed;
         const swayOffset = Math.random() * Math.PI * 2;
-        let animationId;
-        let lastTime = performance.now();
-        
-        // Get background target bounds for collision detection
-        const getTargetBounds = () => {
-            const target = document.getElementById('background-target');
-            if (!target || !target.offsetWidth) return null;
-            const rect = target.getBoundingClientRect();
-            return {
-                left: rect.left - 50, // Add padding for collision
-                right: rect.right + 50,
-                top: rect.top - 50,
-                bottom: rect.bottom + 50
-            };
-        };
         
         const animate = (currentTime) => {
             if (!obj.parentElement) {
@@ -1264,49 +1257,15 @@
             const deltaTime = currentTime - lastTime;
             lastTime = currentTime;
             
-            const cappedDelta = Math.min(deltaTime, 50);
+            // Smooth frame time handling
+            const cappedDelta = Math.min(deltaTime, 32);
             pos += (speed * cappedDelta) / 16.67;
             
-            // Calculate sway
+            // Calculate gentle sway
             const sway = Math.sin((pos + swayOffset) / 50) * 20;
-            horizontalPos = sway + velocityX;
             
-            // Check collision with background target
-            const targetBounds = getTargetBounds();
-            if (targetBounds) {
-                const objRect = obj.getBoundingClientRect();
-                const objCenterX = objRect.left + objRect.width / 2;
-                const objCenterY = objRect.top + objRect.height / 2;
-                
-                // Check if object is colliding with target
-                if (objCenterX > targetBounds.left && objCenterX < targetBounds.right &&
-                    objCenterY > targetBounds.top && objCenterY < targetBounds.bottom) {
-                    
-                    // Determine bounce direction based on which side hit
-                    const targetCenterX = (targetBounds.left + targetBounds.right) / 2;
-                    const targetCenterY = (targetBounds.top + targetBounds.bottom) / 2;
-                    
-                    // Calculate angle from target center to object
-                    const dx = objCenterX - targetCenterX;
-                    const dy = objCenterY - targetCenterY;
-                    
-                    // Bounce horizontally
-                    if (Math.abs(dx) > Math.abs(dy)) {
-                        velocityX = dx > 0 ? 3 : -3;
-                    } else {
-                        velocityX = dx > 0 ? 2 : -2;
-                    }
-                    
-                    // Add some randomness to bounce
-                    velocityX += (Math.random() - 0.5) * 2;
-                }
-            }
-            
-            // Decay horizontal velocity
-            velocityX *= 0.98;
-            
-            // Single transform update
-            obj.style.transform = `translate3d(${horizontalPos}px, ${-pos}px, 0)`;
+            // Single transform update - this is the ONLY style change per frame
+            obj.style.transform = `translate3d(${sway}px, ${-pos}px, 0)`;
 
             if (pos < window.innerHeight + 250) {
                 animationId = requestAnimationFrame(animate);
