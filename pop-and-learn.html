@@ -1145,7 +1145,16 @@
             objColor = '#333';
         }
 
-        obj.onclick = () => handlePop(obj, randomValue, objColor);
+        obj.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handlePop(obj, randomValue, objColor);
+        };
+        obj.ontouchend = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handlePop(obj, randomValue, objColor);
+        };
         obj.setAttribute('tabindex', '0');
         obj.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -1243,6 +1252,10 @@
     }
 
     function handlePop(el, value, color) {
+        // Prevent multiple pops on the same element
+        if (el.dataset.popped === 'true') return;
+        el.dataset.popped = 'true';
+        
         const rect = el.getBoundingClientRect();
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
