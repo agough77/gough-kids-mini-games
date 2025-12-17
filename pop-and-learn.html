@@ -669,7 +669,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.0</div>
+<div class="version-display">v1.0.1</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1268,12 +1268,12 @@
         // Ensure objects always spawn at the bottom
         obj.style.bottom = '0px';
 
-        // Ultra-smooth animation with fixed timestep
+        // Ultra-smooth animation with tiny fixed increments (60fps target)
         let pos = 0;
         
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
-        const baseSpeed = 0.5 + Math.random() * 1;
-        const speed = baseSpeed * currentSpeed;
+        const baseSpeed = 0.3 + Math.random() * 0.4; // Much smaller: 0.3-0.7 pixels per frame
+        const speed = baseSpeed * currentSpeed; // Slow: 0.24-0.56, Normal: 0.45-1.05, Fast: 0.75-1.75
         const swayOffset = Math.random() * Math.PI * 2;
         
         const animate = () => {
@@ -1283,7 +1283,7 @@
                 return;
             }
             
-            // Fixed increment per frame for perfectly smooth motion
+            // Tiny fixed increment per frame for butter-smooth motion at 60fps
             pos += speed;
             
             // Calculate gentle sway
