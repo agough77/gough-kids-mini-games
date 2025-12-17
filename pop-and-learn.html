@@ -681,7 +681,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.1.2</div>
+<div class="version-display">v1.1.3</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1342,30 +1342,28 @@
     }
     
     function startObjectAnimation(obj, randomValue, objColor) {
-        // Use transform for ALL positioning to avoid layout calculations
-        // Random horizontal position across full screen width
-        const objectWidth = 150;
+        // Calculate random horizontal position - full screen width
         const screenWidth = window.innerWidth;
-        const maxX = screenWidth - objectWidth;
-        const startX = Math.random() * maxX;
+        const objectWidth = 150;
+        const startX = Math.floor(Math.random() * (screenWidth - objectWidth));
         
-        // Set initial position using transform only
-        obj.style.bottom = '0px';
-        obj.style.left = '0px'; // Start at 0, use transform for actual position
+        console.log(`Spawning at X: ${startX}, Screen Width: ${screenWidth}`); // Debug
+        
+        // Set all positioning via transform only - no layout properties
         obj.style.transform = `translate3d(${startX}px, 0, 0)`;
         
-        // Append to dedicated container AFTER all styles are set
-        document.getElementById('game-objects-container').appendChild(obj);
+        // Append to DOM
+        const container = document.getElementById('game-objects-container');
+        container.appendChild(obj);
 
-        // Add to master animation array
+        // Add to animation array
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
-        const speed = 1 * currentSpeed;
         
         gameObjects.push({
             element: obj,
             pos: 0,
-            speed: speed,
-            startX: startX // Store horizontal position
+            speed: currentSpeed,
+            startX: startX
         });
     }
 
