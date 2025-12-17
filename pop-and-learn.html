@@ -669,7 +669,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.4</div>
+<div class="version-display">v1.0.5</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1185,78 +1185,86 @@
         if (activeObjectCount >= 8) return; // Max 8 objects at once
         activeObjectCount++;
         
-        const obj = document.createElement('div');
-        const items = getCurrentLessonItems();
-        
-        // 40% chance to spawn the target item for balanced gameplay
-        let randomValue;
-        if (Math.random() < 0.4) {
-            randomValue = targetValue;
-        } else {
-            randomValue = items[Math.floor(Math.random() * items.length)];
-        }
-        
-        // For shapes mode, just show the shape directly
-        if(currentCategoryKeys[categoryIndex] === 'Shapes') {
-            obj.className = 'game-object floating-shape';
-            obj.innerText = randomValue;
-            // Use the current shape color if it matches the target, otherwise random color
-            if(randomValue === targetValue) {
-                obj.style.color = currentShapeColor;
-            } else {
-                const shapeColors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-                obj.style.color = shapeColors[Math.floor(Math.random() * shapeColors.length)];
-            }
-        } else {
-            obj.className = `game-object ${currentMode === 'balloons' ? 'balloon' : 'bubble'}`;
-        }
-        
-        // Random color
-        const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-        let objColor;
-        
-        if(currentCategoryKeys[categoryIndex] === 'Colors') {
-            // For colors mode, make the balloon/bubble the actual color with proper styling
-            objColor = randomValue.toLowerCase();
+        // Use requestAnimationFrame to defer heavy work and prevent spawn stutter
+        requestAnimationFrame(() => {
+            const obj = document.createElement('div');
+            const items = getCurrentLessonItems();
             
-            if(currentMode === 'balloons') {
-                obj.style.background = `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), ${objColor} 45%, rgba(0, 0, 0, 0.2))`;
+            // 40% chance to spawn the target item for balanced gameplay
+            let randomValue;
+            if (Math.random() < 0.4) {
+                randomValue = targetValue;
             } else {
-                // Bubble mode - create colored bubble
-                obj.style.background = `radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95), ${objColor} 50%, ${objColor})`;
-                obj.style.borderColor = `rgba(255, 255, 255, 0.9)`;
+                randomValue = items[Math.floor(Math.random() * items.length)];
             }
-        } else if(currentCategoryKeys[categoryIndex] !== 'Shapes') {
-            // For other modes (not shapes), random color with text
-            objColor = colors[Math.floor(Math.random() * colors.length)];
-            if(currentMode === 'balloons') {
-                obj.style.backgroundColor = objColor;
+            
+            // For shapes mode, just show the shape directly
+            if(currentCategoryKeys[categoryIndex] === 'Shapes') {
+                obj.className = 'game-object floating-shape';
+                obj.innerText = randomValue;
+                // Use the current shape color if it matches the target, otherwise random color
+                if(randomValue === targetValue) {
+                    obj.style.color = currentShapeColor;
+                } else {
+                    const shapeColors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
+                    obj.style.color = shapeColors[Math.floor(Math.random() * shapeColors.length)];
+                }
+            } else {
+                obj.className = `game-object ${currentMode === 'balloons' ? 'balloon' : 'bubble'}`;
             }
-            obj.innerText = randomValue;
-        } else {
-            // For shapes, just use a neutral color for tracking
-            objColor = '#333';
-        }
+            
+            // Random color
+            const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
+            let objColor;
+            
+            if(currentCategoryKeys[categoryIndex] === 'Colors') {
+                // For colors mode, make the balloon/bubble the actual color with proper styling
+                objColor = randomValue.toLowerCase();
+                
+                if(currentMode === 'balloons') {
+                    obj.style.background = `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), ${objColor} 45%, rgba(0, 0, 0, 0.2))`;
+                } else {
+                    // Bubble mode - create colored bubble
+                    obj.style.background = `radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95), ${objColor} 50%, ${objColor})`;
+                    obj.style.borderColor = `rgba(255, 255, 255, 0.9)`;
+                }
+            } else if(currentCategoryKeys[categoryIndex] !== 'Shapes') {
+                // For other modes (not shapes), random color with text
+                objColor = colors[Math.floor(Math.random() * colors.length)];
+                if(currentMode === 'balloons') {
+                    obj.style.backgroundColor = objColor;
+                }
+                obj.innerText = randomValue;
+            } else {
+                // For shapes, just use a neutral color for tracking
+                objColor = '#333';
+            }
 
-        const clickHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handlePop(obj, randomValue, objColor);
-        };
-        const keyHandler = (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            const clickHandler = (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 handlePop(obj, randomValue, objColor);
-            }
-        };
-        
-        obj.onclick = clickHandler;
-        obj.ontouchend = clickHandler;
-        obj.setAttribute('tabindex', '0');
-        obj.addEventListener('keydown', keyHandler, { passive: false });
-        
-        // Store handlers for cleanup
-        obj._handlers = { click: clickHandler, key: keyHandler };
+            };
+            const keyHandler = (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handlePop(obj, randomValue, objColor);
+                }
+            };
+            
+            obj.onclick = clickHandler;
+            obj.ontouchend = clickHandler;
+            obj.setAttribute('tabindex', '0');
+            obj.addEventListener('keydown', keyHandler, { passive: false });
+            
+            // Store handlers for cleanup
+            obj._handlers = { click: clickHandler, key: keyHandler };
+            
+            startObjectAnimation(obj, randomValue, objColor);
+        });
+    }
+    
+    function startObjectAnimation(obj, randomValue, objColor) {
         
         document.body.appendChild(obj);
         
