@@ -683,7 +683,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v2.1.1</div>
+<div class="version-display">v2.2.0</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -954,8 +954,7 @@
         
         updateLessonDisplay();
         updateTarget();
-        startMasterAnimationLoop(); // Start single animation loop like raptor game
-        startSpawning();
+        startMasterAnimationLoop(); // Single loop handles both spawn and animation
         
         // Keyboard support
         document.addEventListener('keydown', (e) => {
@@ -964,34 +963,6 @@
                 document.querySelectorAll('.game-object').forEach(obj => obj.remove());
             }
         });
-    }
-
-    function startSpawning() {
-        if (spawnInterval) {
-            cancelAnimationFrame(spawnInterval);
-            spawnInterval = null;
-        }
-        
-        // Use requestAnimationFrame for smooth continuous spawning
-        let lastSpawnTime = performance.now();
-        const currentSpeed = speedSettings[speedKeys[speedIndex]];
-        
-        const spawnLoop = (currentTime) => {
-            if (!spawnInterval) return; // Check if we should stop
-            
-            // Spawn one object at a time with slight random variation
-            const timeSinceLastSpawn = currentTime - lastSpawnTime;
-            const spawnDelay = currentSpeed.interval + (Math.random() * 200 - 100); // ±100ms variation
-            
-            if (timeSinceLastSpawn >= spawnDelay) {
-                spawnObject();
-                lastSpawnTime = currentTime;
-            }
-            
-            spawnInterval = requestAnimationFrame(spawnLoop);
-        };
-        
-        spawnInterval = requestAnimationFrame(spawnLoop);
     }
 
     let currentShapeColor = '#e91e63'; // Store current shape color
@@ -1344,7 +1315,19 @@
     }
     
     function startMasterAnimationLoop() {
-        function masterLoop() {
+        let lastSpawnTime = performance.now();
+        const currentSpeed = speedSettings[speedKeys[speedIndex]];
+        
+        function masterLoop(currentTime) {
+            // Handle spawning in same loop
+            const timeSinceLastSpawn = currentTime - lastSpawnTime;
+            const spawnDelay = currentSpeed.interval + (Math.random() * 200 - 100);
+            
+            if (timeSinceLastSpawn >= spawnDelay) {
+                spawnObject();
+                lastSpawnTime = currentTime;
+            }
+            
             // Update all objects in one loop - like raptor game
             for (let i = gameObjects.length - 1; i >= 0; i--) {
                 const obj = gameObjects[i];
