@@ -299,6 +299,8 @@
             z-index: 10;
             backface-visibility: hidden;
             perspective: 1000px;
+            contain: layout style paint;
+            pointer-events: auto;
         }
 
         /* Balloon Style */
@@ -1161,9 +1163,9 @@
         const obj = document.createElement('div');
         const items = getCurrentLessonItems();
         
-        // 60% chance to spawn the target item for easier gameplay
+        // 40% chance to spawn the target item for balanced gameplay
         let randomValue;
-        if (Math.random() < 0.6) {
+        if (Math.random() < 0.4) {
             randomValue = targetValue;
         } else {
             randomValue = items[Math.floor(Math.random() * items.length)];
@@ -1238,28 +1240,23 @@
         
         document.body.appendChild(obj);
 
-        // Optimized animation - smooth floating with sway
+        // Ultra-smooth animation with fixed timestep
         let pos = 0;
         let animationId;
-        let lastTime = performance.now();
         
         const currentSpeed = speedSettings[speedKeys[speedIndex]].speed;
         const baseSpeed = 0.5 + Math.random() * 1;
         const speed = baseSpeed * currentSpeed;
         const swayOffset = Math.random() * Math.PI * 2;
         
-        const animate = (currentTime) => {
+        const animate = () => {
             if (!obj.parentElement) {
                 if (animationId) cancelAnimationFrame(animationId);
                 return;
             }
             
-            const deltaTime = currentTime - lastTime;
-            lastTime = currentTime;
-            
-            // Smooth frame time handling
-            const cappedDelta = Math.min(deltaTime, 32);
-            pos += (speed * cappedDelta) / 16.67;
+            // Fixed increment per frame for perfectly smooth motion
+            pos += speed;
             
             // Calculate gentle sway
             const sway = Math.sin((pos + swayOffset) / 50) * 20;
