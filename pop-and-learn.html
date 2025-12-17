@@ -669,7 +669,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.5</div>
+<div class="version-display">v1.0.6</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -943,9 +943,30 @@
     }
 
     function startSpawning() {
-        if (spawnInterval) clearInterval(spawnInterval);
+        if (spawnInterval) {
+            cancelAnimationFrame(spawnInterval);
+            spawnInterval = null;
+        }
+        
+        // Use requestAnimationFrame for smooth continuous spawning
+        let lastSpawnTime = 0;
         const currentSpeed = speedSettings[speedKeys[speedIndex]];
-        spawnInterval = setInterval(spawnObject, currentSpeed.interval);
+        
+        const spawnLoop = (currentTime) => {
+            if (!spawnInterval) return; // Check if we should stop
+            
+            // Random variation ±200ms for more organic feel
+            const spawnDelay = currentSpeed.interval + (Math.random() * 400 - 200);
+            
+            if (currentTime - lastSpawnTime >= spawnDelay) {
+                spawnObject();
+                lastSpawnTime = currentTime;
+            }
+            
+            spawnInterval = requestAnimationFrame(spawnLoop);
+        };
+        
+        spawnInterval = requestAnimationFrame(spawnLoop);
     }
 
     let currentShapeColor = '#e91e63'; // Store current shape color
@@ -1394,7 +1415,10 @@
         // Save progress
         saveProgress();
         // Stop spawning objects
-        if (spawnInterval) clearInterval(spawnInterval);
+        if (spawnInterval) {
+            cancelAnimationFrame(spawnInterval);
+            spawnInterval = null;
+        }
         // Clear all existing objects
         document.querySelectorAll('.game-object').forEach(obj => obj.remove());
         // Show start screen with player selection
