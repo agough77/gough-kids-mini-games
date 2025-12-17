@@ -203,23 +203,64 @@
         h1 { margin: 0; color: #0277bd; font-size: 2rem; }
         #target-display { font-weight: bold; color: #e91e63; font-size: 2.5rem; }
 
+        #controls-toggle {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            background: #ff9800;
+            border: 0.25rem solid white;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 150;
+            box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        #controls-toggle:active {
+            transform: scale(0.9);
+        }
+
         .controls {
-            position: absolute;
-            bottom: 0.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 140;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.98);
+            border-top: 0.3rem solid #4fc3f7;
+            box-shadow: 0 -0.5rem 2rem rgba(0,0,0,0.3);
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .controls.open {
+            transform: translateY(0);
+        }
+
+        .controls-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 0.75rem;
             justify-content: center;
-            padding: 0.5rem;
         }
 
         button {
-            padding: 0.6rem 1.2rem;
-            font-size: 1rem;
-            border-radius: 1.2rem;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border-radius: 1.5rem;
             border: none;
             background: #4fc3f7;
             color: white;
@@ -227,6 +268,8 @@
             font-weight: bold;
             white-space: nowrap;
             flex-shrink: 0;
+            min-height: 3.5rem;
+            touch-action: manipulation;
         }
 
         button:active { transform: scale(0.95); }
@@ -604,14 +647,26 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="controls">
-    <button onclick="returnToMenu()">🏠 Menu</button>
-    <button onclick="prevLesson()">⬅️ Previous Lesson</button>
-    <button onclick="nextLesson()">Next Lesson ➡️</button>
-    <button onclick="changeMode('balloons')">🎈 Balloons</button>
-    <button onclick="changeMode('bubbles')">🫧 Bubbles</button>
-    <button onclick="changeCategory()">📚 Mode: <span id="category-name">ABCs</span></button>
-    <button onclick="changeSpeed()">⚡ Speed: <span id="speed-name">Normal</span></button>
+<!-- Toggle Button -->
+<button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
+
+<!-- Controls Panel -->
+<div class="controls" id="controls-panel">
+    <div class="controls-row">
+        <button onclick="returnToMenu()">🏠 Menu</button>
+        <button onclick="changeCategory()">📚 Mode: <span id="category-name">ABCs</span></button>
+    </div>
+    <div class="controls-row">
+        <button onclick="prevLesson()">⬅️ Previous</button>
+        <button onclick="nextLesson()">Next ➡️</button>
+    </div>
+    <div class="controls-row">
+        <button onclick="changeMode('balloons')">🎈 Balloons</button>
+        <button onclick="changeMode('bubbles')">🫧 Bubbles</button>
+    </div>
+    <div class="controls-row">
+        <button onclick="changeSpeed()">⚡ Speed: <span id="speed-name">Normal</span></button>
+    </div>
 </div>
 
 <script>
@@ -709,6 +764,7 @@
         streak = 0;
         streakCount.innerText = streak;
         saveProgress();
+        toggleControls();
     }
 
     function prevLesson() {
@@ -720,6 +776,7 @@
         streak = 0;
         streakCount.innerText = streak;
         saveProgress();
+        toggleControls();
     }
 
     function playPopSound() {
@@ -1308,6 +1365,11 @@
         showCelebrationText('Lesson Complete! 🎉', window.innerWidth / 2, window.innerHeight / 2);
     }
 
+    function toggleControls() {
+        const panel = document.getElementById('controls-panel');
+        panel.classList.toggle('open');
+    }
+
     function returnToMenu() {
         // Save progress
         saveProgress();
@@ -1329,6 +1391,7 @@
     function changeMode(mode) {
         currentMode = mode;
         saveProgress();
+        toggleControls();
     }
 
     function changeCategory() {
@@ -1341,6 +1404,7 @@
         streak = 0;
         streakCount.innerText = streak;
         saveProgress();
+        toggleControls();
     }
 
     function changeSpeed() {
@@ -1348,6 +1412,7 @@
         speedNameDisplay.innerText = speedKeys[speedIndex];
         startSpawning();
         saveProgress();
+        toggleControls();
     }
 
     // Don't auto-start - wait for start screen
