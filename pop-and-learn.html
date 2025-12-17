@@ -582,6 +582,20 @@
             z-index: 100;
         }
 
+        .version-display {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.1);
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #666;
+            z-index: 130;
+        }
+
         /* Large Background Target Display */
         .background-target {
             position: absolute;
@@ -654,6 +668,8 @@
 <div class="lesson-items" id="lesson-items">
     <!-- Lesson items will be populated here -->
 </div>
+
+<div class="version-display">v1.0.0</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
