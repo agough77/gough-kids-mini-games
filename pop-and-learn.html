@@ -322,13 +322,9 @@
             border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
             background-color: var(--balloon-color);
             background: radial-gradient(circle at 30% 30%, 
-                rgba(255, 255, 255, 0.8), 
-                var(--balloon-color) 45%, 
-                rgba(0, 0, 0, 0.2));
-            box-shadow: 
-                inset -0.9rem -0.9rem 1.5rem rgba(0,0,0,0.2),
-                inset 0.9rem 0.9rem 1.5rem rgba(255,255,255,0.3),
-                0 0.5rem 1.25rem rgba(0,0,0,0.3);
+                rgba(255, 255, 255, 0.6), 
+                var(--balloon-color) 60%);
+            box-shadow: 0 0.3rem 0.8rem rgba(0,0,0,0.3);
             position: relative;
         }
         .balloon::before {
@@ -348,16 +344,11 @@
             width: 11rem;
             height: 11rem;
             background: radial-gradient(circle at 35% 35%, 
-                rgba(255, 255, 255, 0.95), 
-                rgba(100, 200, 255, 0.6) 50%,
-                rgba(50, 150, 255, 0.8));
+                rgba(255, 255, 255, 0.9), 
+                rgba(100, 200, 255, 0.6) 60%);
             border-radius: 50%;
             border: 0.2rem solid rgba(255, 255, 255, 0.9);
-            box-shadow: 
-                0 0 1.25rem rgba(100, 200, 255, 0.6),
-                inset -1.25rem -1.25rem 1.875rem rgba(50, 150, 255, 0.3),
-                inset 0.9rem 0.9rem 1.25rem rgba(255, 255, 255, 0.8),
-                0 0.3rem 1rem rgba(0, 100, 200, 0.4);
+            box-shadow: 0 0 0.8rem rgba(100, 200, 255, 0.5);
             position: relative;
         }
         .bubble::before {
@@ -683,7 +674,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v2.2.0</div>
+<div class="version-display">v2.2.1</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1198,9 +1189,6 @@
     }
 
     function spawnObject() {
-        // Cap at 20 objects to prevent DOM bloat
-        if (activeObjectCount >= 20) return;
-        
         const obj = document.createElement('div');
             const items = getCurrentLessonItems();
             
@@ -1336,7 +1324,7 @@
                 // Move up
                 obj._animData.y -= obj._animData.speedY;
                 
-                // Update transform
+                // Update transform - direct style mutation
                 obj.style.transform = `translate3d(${obj._animData.x}px, ${obj._animData.y}px, 0)`;
                 
                 // Remove if off screen
