@@ -681,7 +681,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.1.0</div>
+<div class="version-display">v1.1.1</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -990,33 +990,34 @@
         if (masterAnimationId) cancelAnimationFrame(masterAnimationId);
         
         const masterLoop = () => {
-            // Update all active objects
-            for (let i = gameObjects.length - 1; i >= 0; i--) {
+            // Update all active objects in one pass
+            const toRemove = [];
+            
+            for (let i = 0; i < gameObjects.length; i++) {
                 const objData = gameObjects[i];
                 const obj = objData.element;
                 
                 // Check if should remove
-                if (!obj.parentElement || obj.dataset.popped === 'true') {
-                    gameObjects.splice(i, 1);
-                    activeObjectCount--;
-                    continue;
-                }
-                
-                // Update position
-                objData.pos += objData.speed;
-                obj.style.transform = `translate3d(0, ${-objData.pos}px, 0)`;
-                
-                // Remove if off screen
-                if (objData.pos >= window.innerHeight + 250) {
+                if (!obj.parentElement || obj.dataset.popped === 'true' || objData.pos >= window.innerHeight + 250) {
                     if (obj._handlers) {
                         obj.removeEventListener('keydown', obj._handlers.key);
                         obj.onclick = null;
                         obj.ontouchend = null;
                     }
-                    obj.remove();
-                    gameObjects.splice(i, 1);
+                    if (obj.parentElement) obj.remove();
+                    toRemove.push(i);
                     activeObjectCount--;
+                    continue;
                 }
+                
+                // Update position - single style change
+                objData.pos += objData.speed;
+                obj.style.transform = `translate3d(0, ${-objData.pos}px, 0)`;
+            }
+            
+            // Remove marked objects after iteration
+            for (let i = toRemove.length - 1; i >= 0; i--) {
+                gameObjects.splice(toRemove[i], 1);
             }
             
             masterAnimationId = requestAnimationFrame(masterLoop);
@@ -1343,9 +1344,11 @@
     function startObjectAnimation(obj, randomValue, objColor) {
         // Set ALL styles BEFORE appending to prevent layout thrashing
         // Random horizontal position across full screen width
-        const objectWidth = 200; // Max object width
-        const maxX = window.innerWidth - objectWidth;
-        const startX = Math.random() * maxX; // 0 to maxX
+        const objectWidth = 150; // Actual max object width
+        const padding = 10; // Small edge padding
+        const minX = padding;
+        const maxX = window.innerWidth - objectWidth - padding;
+        const startX = minX + (Math.random() * (maxX - minX)); // Evenly distribute
         obj.style.left = startX + 'px';
         obj.style.bottom = '0px';
         obj.style.transform = 'translate3d(0, 0, 0)'; // Initialize transform
