@@ -240,6 +240,77 @@
                 font-size: clamp(0.6rem, 2vw, 0.8rem);
                 padding: 6px 10px;
             }
+
+            #ui-layer {
+                top: 5px;
+            }
+
+            .instruction-card {
+                padding: 10px 15px;
+                border-radius: 25px;
+                border-width: 3px;
+            }
+
+            h1 {
+                font-size: clamp(1rem, 4vw, 1.5rem);
+            }
+
+            #target-display {
+                font-size: clamp(1.5rem, 5vw, 2rem);
+            }
+
+            .lesson-info {
+                top: auto;
+                bottom: 140px;
+                left: 10px;
+                padding: 8px 15px;
+                font-size: 0.9rem;
+                border-radius: 15px;
+                border-width: 2px;
+            }
+
+            .streak-display {
+                top: auto;
+                bottom: 140px;
+                right: 10px;
+                padding: 8px 15px;
+                font-size: 1rem;
+                border-radius: 15px;
+                border-width: 2px;
+            }
+
+            .lesson-items {
+                bottom: 60px;
+                padding: 8px 12px;
+                gap: 8px;
+                border-radius: 15px;
+                border-width: 2px;
+                max-width: 90vw;
+                overflow-x: auto;
+            }
+
+            .lesson-item {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
+                border-radius: 10px;
+                flex-shrink: 0;
+            }
+
+            .lesson-item.completed::after {
+                width: 18px;
+                height: 18px;
+                font-size: 0.7rem;
+                line-height: 18px;
+            }
+
+            .background-target {
+                font-size: clamp(8rem, 25vw, 15rem);
+            }
+
+            .celebration-text {
+                font-size: clamp(2rem, 8vw, 3rem);
+            }
         }
 
         /* Game Objects */
