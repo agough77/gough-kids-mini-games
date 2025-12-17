@@ -681,7 +681,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v1.0.8</div>
+<div class="version-display">v1.0.9</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -1298,17 +1298,16 @@
     }
     
     function startObjectAnimation(obj, randomValue, objColor) {
-        
-        // Append to dedicated container to prevent layout thrashing
-        document.getElementById('game-objects-container').appendChild(obj);
-        
+        // Set ALL styles BEFORE appending to prevent layout thrashing
         // Random horizontal position with padding for larger objects
         const maxWidth = window.innerWidth - 200;
         const startX = Math.max(20, Math.random() * maxWidth);
         obj.style.left = startX + 'px';
-        
-        // Ensure objects always spawn at the bottom
         obj.style.bottom = '0px';
+        obj.style.transform = 'translate3d(0, 0, 0)'; // Initialize transform
+        
+        // Append to dedicated container AFTER all styles are set
+        document.getElementById('game-objects-container').appendChild(obj);
 
         // Ultra-smooth animation with consistent fixed increment
         let pos = 0;
