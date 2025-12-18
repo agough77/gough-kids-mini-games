@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pop & Learn ABCs</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         :root {
             --bg-color: #e0f7fa;
@@ -36,14 +37,14 @@
             height: 100%;
         }
 
-        #game-objects-container {
+        #game-canvas {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
             z-index: 5;
+            cursor: pointer;
         }
 
         /* Start Screen */
@@ -189,6 +190,17 @@
             outline: none;
             border-color: #ff9800;
             box-shadow: 0 0 0.625rem rgba(79, 195, 247, 0.5);
+        }
+
+        #player-name-input.error {
+            border-color: #f44336;
+            animation: input-shake 0.5s;
+        }
+
+        @keyframes input-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
         #ui-layer {
@@ -652,7 +664,7 @@
     </div>
 </div>
 
-<div id="game-objects-container"></div>
+<canvas id="game-canvas"></canvas>
 
 <div class="background-target" id="background-target">?</div>
 
@@ -674,7 +686,7 @@
     <!-- Lesson items will be populated here -->
 </div>
 
-<div class="version-display">v2.2.1</div>
+<div class="version-display">v3.0.0 Canvas</div>
 
 <!-- Toggle Button -->
 <button id="controls-toggle" onclick="toggleControls()" aria-label="Toggle Controls">⚙️</button>
@@ -713,6 +725,7 @@
     };
 
     const encouragements = ['Great!', 'Awesome!', 'Perfect!', 'Amazing!', 'Fantastic!', 'Wonderful!', 'Excellent!'];
+    const tryAgainMessages = ['Keep Trying!', 'Try Again!', 'You Can Do It!', 'Almost!', 'Keep Going!', 'Nice Try!', 'So Close!'];
 
     let currentCategoryKeys = Object.keys(allCategories);
     let categoryIndex = 0;
@@ -728,6 +741,18 @@
     let activeObjectCount = 0; // Track active objects efficiently
     let gameObjects = []; // Array to track all active objects for single animation loop
     let masterAnimationId = null; // Single master animation loop
+    
+    // Canvas setup
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    // Resize canvas on window resize
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
     
     const targetDisplay = document.getElementById('target-display');
     const backgroundTarget = document.getElementById('background-target');
@@ -747,7 +772,12 @@
     };
 
     // Audio Context for sound effects
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let audioContext;
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+        console.warn('Audio context not available:', e);
+    }
 
     function getCurrentLessonItems() {
         const allItems = allCategories[currentCategoryKeys[categoryIndex]];
@@ -791,79 +821,98 @@
         const maxLessons = getMaxLessons();
         currentLesson = (currentLesson + 1) % maxLessons;
         completedItems.clear();
+        // Clear all objects from previous lesson
+        gameObjects = [];
+        activeObjectCount = 0;
         updateLessonDisplay();
         updateTarget();
         streak = 0;
         streakCount.innerText = streak;
         saveProgress();
-        toggleControls();
     }
 
     function prevLesson() {
         const maxLessons = getMaxLessons();
         currentLesson = (currentLesson - 1 + maxLessons) % maxLessons;
         completedItems.clear();
+        // Clear all objects from previous lesson
+        gameObjects = [];
+        activeObjectCount = 0;
         updateLessonDisplay();
         updateTarget();
         streak = 0;
         streakCount.innerText = streak;
         saveProgress();
-        toggleControls();
     }
 
     function playPopSound() {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    function playWrongSound() {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 200;
-        oscillator.type = 'sawtooth';
-        
-        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.15);
-    }
-
-    function playCelebrationSound() {
-        const frequencies = [523, 659, 784, 1047];
-        frequencies.forEach((freq, i) => {
+        if (!audioContext) return;
+        try {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            oscillator.frequency.value = freq;
+            oscillator.frequency.value = 800;
             oscillator.type = 'sine';
             
-            const startTime = audioContext.currentTime + (i * 0.1);
-            gainNode.gain.setValueAtTime(0.15, startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
             
-            oscillator.start(startTime);
-            oscillator.stop(startTime + 0.2);
-        });
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (e) {
+            console.warn('Audio error:', e);
+        }
+    }
+
+    function playWrongSound() {
+        if (!audioContext) return;
+        try {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 200;
+            oscillator.type = 'sawtooth';
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        } catch (e) {
+            console.warn('Audio error:', e);
+        }
+    }
+
+    function playCelebrationSound() {
+        if (!audioContext) return;
+        try {
+            const frequencies = [523, 659, 784, 1047];
+            frequencies.forEach((freq, i) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = 'sine';
+                
+                const startTime = audioContext.currentTime + (i * 0.1);
+                gainNode.gain.setValueAtTime(0.15, startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.2);
+                
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.2);
+            });
+        } catch (e) {
+            console.warn('Audio error:', e);
+        }
     }
 
     function createParticles(x, y, color) {
@@ -973,8 +1022,15 @@
         const nameInput = document.getElementById('player-name-input');
         const name = nameInput.value.trim();
         
+        console.log('selectPlayer called with name:', name);
+        
         if (!name) {
-            alert('Please enter a name!');
+            nameInput.placeholder = 'Please enter your name!';
+            nameInput.classList.add('error');
+            setTimeout(() => {
+                nameInput.placeholder = 'Enter your name';
+                nameInput.classList.remove('error');
+            }, 2000);
             return;
         }
         
@@ -1073,7 +1129,13 @@
     }
 
     function startNewGame() {
+        console.log('startNewGame called, currentPlayer:', currentPlayer);
         if (!currentPlayer) return;
+        
+        // Resume audio context on user interaction
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
         
         // Clear saved progress for this player
         localStorage.removeItem(getPlayerKey());
@@ -1086,10 +1148,17 @@
         currentMode = 'balloons';
         // Hide start screen and start game
         document.getElementById('start-screen').classList.add('hidden');
+        console.log('Calling initGame...');
         initGame();
+        console.log('Game initialized');
     }
 
     function continueGame() {
+        // Resume audio context on user interaction
+        if (audioContext && audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
         const progress = loadProgress();
         if (progress) {
             categoryIndex = progress.categoryIndex || 0;
@@ -1189,125 +1258,294 @@
     }
 
     function spawnObject() {
-        const obj = document.createElement('div');
-            const items = getCurrentLessonItems();
-            
-            // 40% chance to spawn the target item for balanced gameplay
-            let randomValue;
-            if (Math.random() < 0.4) {
-                randomValue = targetValue;
-            } else {
-                randomValue = items[Math.floor(Math.random() * items.length)];
-            }
-            
-            // For shapes mode, just show the shape directly
-            if(currentCategoryKeys[categoryIndex] === 'Shapes') {
-                obj.className = 'game-object floating-shape';
-                obj.innerText = randomValue;
-                // Use the current shape color if it matches the target, otherwise random color
-                if(randomValue === targetValue) {
-                    obj.style.color = currentShapeColor;
-                } else {
-                    const shapeColors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-                    obj.style.color = shapeColors[Math.floor(Math.random() * shapeColors.length)];
-                }
-            } else {
-                obj.className = `game-object ${currentMode === 'balloons' ? 'balloon' : 'bubble'}`;
-            }
-            
-            // Random color
-            const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
-            let objColor;
-            
-            if(currentCategoryKeys[categoryIndex] === 'Colors') {
-                // For colors mode, make the balloon/bubble the actual color with proper styling
-                objColor = randomValue.toLowerCase();
-                
-                if(currentMode === 'balloons') {
-                    obj.style.background = `radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), ${objColor} 45%, rgba(0, 0, 0, 0.2))`;
-                } else {
-                    // Bubble mode - create colored bubble
-                    obj.style.background = `radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.95), ${objColor} 50%, ${objColor})`;
-                    obj.style.borderColor = `rgba(255, 255, 255, 0.9)`;
-                }
-            } else if(currentCategoryKeys[categoryIndex] !== 'Shapes') {
-                // For other modes (not shapes), random color with text
-                objColor = colors[Math.floor(Math.random() * colors.length)];
-                if(currentMode === 'balloons') {
-                    obj.style.backgroundColor = objColor;
-                }
-                obj.innerText = randomValue;
-            } else {
-                // For shapes, just use a neutral color for tracking
-                objColor = '#333';
-            }
-
-            const clickHandler = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handlePop(obj, randomValue, objColor);
-            };
-            const keyHandler = (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handlePop(obj, randomValue, objColor);
-                }
-            };
-            
-            obj.onclick = clickHandler;
-            obj.ontouchend = clickHandler;
-            obj.setAttribute('tabindex', '0');
-            obj.addEventListener('keydown', keyHandler, { passive: false });
-            
-            // Store handlers for cleanup
-            obj._handlers = { click: clickHandler, key: keyHandler };
-            
-            startObjectAnimation(obj, randomValue, objColor);
-    }
-    
-    function startObjectAnimation(obj, randomValue, objColor) {
-        // Calculate rem size: 1rem = 1.5vmin, bubble is 11rem = 16.5vmin
+        const items = getCurrentLessonItems();
+        
+        // 40% chance to spawn the target item for balanced gameplay
+        let randomValue;
+        if (Math.random() < 0.4) {
+            randomValue = targetValue;
+        } else {
+            randomValue = items[Math.floor(Math.random() * items.length)];
+        }
+        
+        // Calculate rem size
         const vmin = Math.min(window.innerWidth, window.innerHeight) / 100;
         const remInPx = 1.5 * vmin;
-        const objectWidth = 11 * remInPx; // Bubble width (larger than balloon)
+        const size = currentMode === 'balloons' ? 10 * remInPx : 11 * remInPx;
         
-        // Calculate random horizontal position - full screen width
+        // Random horizontal position
         const screenWidth = window.innerWidth;
-        const maxX = screenWidth - objectWidth;
+        const maxX = screenWidth - size;
         const startX = Math.floor(Math.random() * Math.max(0, maxX));
         
-        // Get speed for this object
+        // Get speed
         const speedName = speedKeys[speedIndex];
         const speeds = { 'Slow': 0.4, 'Normal': 0.7, 'Fast': 1.2 };
         const speedY = speeds[speedName];
         
-        // Store animation data on object
-        obj._animData = {
+        // Random color
+        const colors = ['#ff5252', '#448aff', '#4caf50', '#ffeb3b', '#e040fb', '#ff9800'];
+        let objColor;
+        
+        if(currentCategoryKeys[categoryIndex] === 'Colors') {
+            // Convert color name to hex
+            const colorMap = {
+                'red': '#ff0000',
+                'blue': '#0000ff',
+                'green': '#00ff00',
+                'yellow': '#ffff00',
+                'purple': '#800080',
+                'orange': '#ffa500',
+                'pink': '#ffc0cb',
+                'brown': '#a52a2a',
+                'black': '#000000',
+                'white': '#ffffff'
+            };
+            objColor = colorMap[randomValue.toLowerCase()] || '#ff5252';
+        } else if(currentCategoryKeys[categoryIndex] === 'Shapes') {
+            if(randomValue === targetValue) {
+                objColor = currentShapeColor;
+            } else {
+                objColor = colors[Math.floor(Math.random() * colors.length)];
+            }
+        } else {
+            objColor = colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // Create game object
+        const obj = {
             x: startX,
-            y: 0,
-            speedY: speedY
+            y: window.innerHeight, // Start at bottom
+            size: size,
+            speedY: speedY,
+            value: randomValue,
+            color: objColor,
+            type: currentMode,
+            isShape: currentCategoryKeys[categoryIndex] === 'Shapes'
         };
         
-        // Set initial position using transform
-        obj.style.left = '0';
-        obj.style.transform = `translate3d(${startX}px, 0, 0)`;
-        
-        // Append to DOM
-        const container = document.getElementById('game-objects-container');
-        container.appendChild(obj);
-        
-        // Add to gameObjects array for master loop
         gameObjects.push(obj);
-        
         activeObjectCount++;
+    }
+    
+    // Draw balloon on canvas
+    function drawBalloon(x, y, size, color) {
+        const width = size;
+        const height = size * 1.25;
+        
+        ctx.save();
+        
+        // Shadow behind balloon
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        
+        // Main balloon body - more realistic oval shape
+        ctx.beginPath();
+        ctx.ellipse(x + width/2, y + height/2.2, width/2, height/2, 0, 0, Math.PI * 2);
+        
+        // Multi-stop gradient for realistic 3D effect
+        const gradient = ctx.createRadialGradient(
+            x + width*0.35, y + height*0.25, 0,
+            x + width/2, y + height/2, width*0.7
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.3, color);
+        gradient.addColorStop(0.7, color);
+        // Darker edge for depth
+        const darkerColor = adjustBrightness(color, -30);
+        gradient.addColorStop(1, darkerColor);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Remove shadow for overlays
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Main highlight/shine
+        ctx.beginPath();
+        ctx.ellipse(x + width*0.3, y + height*0.2, width*0.18, height*0.14, -0.3, 0, Math.PI * 2);
+        const highlightGradient = ctx.createRadialGradient(
+            x + width*0.3, y + height*0.2, 0,
+            x + width*0.3, y + height*0.2, width*0.18
+        );
+        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        highlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = highlightGradient;
+        ctx.fill();
+        
+        // Secondary highlight
+        ctx.beginPath();
+        ctx.ellipse(x + width*0.7, y + height*0.35, width*0.08, height*0.06, 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fill();
+        
+        // Subtle rim light on left edge
+        ctx.beginPath();
+        ctx.ellipse(x + width*0.15, y + height*0.45, width*0.05, height*0.2, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fill();
+        
+        // Balloon knot at bottom
+        ctx.beginPath();
+        ctx.ellipse(x + width/2, y + height*0.95, width*0.08, height*0.04, 0, 0, Math.PI * 2);
+        ctx.fillStyle = darkerColor;
+        ctx.fill();
+        
+        // Balloon string - curved and realistic
+        ctx.strokeStyle = 'rgba(200, 200, 200, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x + width/2, y + height);
+        // Wavy string
+        ctx.bezierCurveTo(
+            x + width/2 - 10, y + height + 15,
+            x + width/2 + 15, y + height + 25,
+            x + width/2, y + height + 40
+        );
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    // Helper function to adjust color brightness
+    function adjustBrightness(color, amount) {
+        // Convert hex to RGB
+        let r, g, b;
+        if (color.startsWith('#')) {
+            const hex = color.slice(1);
+            r = parseInt(hex.substr(0, 2), 16);
+            g = parseInt(hex.substr(2, 2), 16);
+            b = parseInt(hex.substr(4, 2), 16);
+        } else {
+            return color;
+        }
+        
+        // Adjust brightness
+        r = Math.max(0, Math.min(255, r + amount));
+        g = Math.max(0, Math.min(255, g + amount));
+        b = Math.max(0, Math.min(255, b + amount));
+        
+        // Convert back to hex
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+    
+    // Draw bubble on canvas
+    function drawBubble(x, y, size, color) {
+        ctx.save();
+        
+        // Main bubble circle
+        ctx.beginPath();
+        ctx.arc(x + size/2, y + size/2, size/2, 0, Math.PI * 2);
+        
+        // Gradient fill for transparency effect
+        const gradient = ctx.createRadialGradient(x + size*0.3, y + size*0.3, 0, x + size/2, y + size/2, size/2);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.4, color + '80'); // Add transparency
+        gradient.addColorStop(1, color + '40');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Outer border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        // Highlight spots
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(x + size*0.3, y + size*0.3, size*0.15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(x + size*0.7, y + size*0.6, size*0.08, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+    
+    // Draw text on object
+    function drawText(obj) {
+        // Colors mode: no text, just the color
+        const currentCategory = currentCategoryKeys[categoryIndex];
+        if(currentCategory === 'Colors') {
+            return; // Don't draw any text
+        }
+        
+        // Shapes mode: draw the shape emoji/symbol only
+        if (obj.isShape) {
+            ctx.save();
+            ctx.fillStyle = obj.color;
+            ctx.font = `bold ${obj.size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(obj.value, obj.x + obj.size/2, obj.y + obj.size/2);
+            ctx.restore();
+            return;
+        }
+        
+        // Default: draw text (letters/numbers)
+        ctx.save();
+        ctx.fillStyle = '#333';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.font = `bold ${obj.size * 0.3}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeText(obj.value, obj.x + obj.size/2, obj.y + obj.size/2);
+        ctx.fillText(obj.value, obj.x + obj.size/2, obj.y + obj.size/2);
+        ctx.restore();
+    }
+    
+    // Draw realistic 3D shape
+    function drawRealisticShape(x, y, size, color, shapeSymbol) {
+        ctx.save();
+        
+        // Draw the main shape with gradient
+        const gradient = ctx.createRadialGradient(
+            x + size*0.35, y + size*0.35, 0,
+            x + size/2, y + size/2, size*0.6
+        );
+        
+        // Create gradient from light to dark
+        const lightColor = adjustBrightness(color, 60);
+        const darkColor = adjustBrightness(color, -30);
+        
+        gradient.addColorStop(0, lightColor);
+        gradient.addColorStop(0.5, color);
+        gradient.addColorStop(1, darkColor);
+        
+        ctx.fillStyle = gradient;
+        ctx.font = `bold ${size * 0.8}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(shapeSymbol, x + size/2, y + size/2);
+        
+        // Add highlight for 3D effect
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.font = `bold ${size * 0.25}px Arial`;
+        ctx.fillText(shapeSymbol, x + size*0.4, y + size*0.35);
+        
+        // Add subtle rim light
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = `bold ${size * 0.15}px Arial`;
+        ctx.fillText(shapeSymbol, x + size*0.3, y + size*0.4);
+        
+        ctx.restore();
     }
     
     function startMasterAnimationLoop() {
         let lastSpawnTime = performance.now();
-        const currentSpeed = speedSettings[speedKeys[speedIndex]];
         
         function masterLoop(currentTime) {
             // Handle spawning in same loop
+            const currentSpeed = speedSettings[speedKeys[speedIndex]];
             const timeSinceLastSpawn = currentTime - lastSpawnTime;
             const spawnDelay = currentSpeed.interval + (Math.random() * 200 - 100);
             
@@ -1316,25 +1554,33 @@
                 lastSpawnTime = currentTime;
             }
             
-            // Update all objects in one loop - like raptor game
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw all objects
             for (let i = gameObjects.length - 1; i >= 0; i--) {
                 const obj = gameObjects[i];
-                if (!obj._animData) continue;
                 
-                // Move up
-                obj._animData.y -= obj._animData.speedY;
+                // Move up (negative Y = up)
+                obj.y -= obj.speedY;
                 
-                // Update transform - direct style mutation
-                obj.style.transform = `translate3d(${obj._animData.x}px, ${obj._animData.y}px, 0)`;
-                
-                // Remove if off screen
-                if (obj._animData.y < -window.innerHeight * 1.5) {
-                    if (obj._handlers) {
-                        obj.removeEventListener('keydown', obj._handlers.key);
-                        obj.onclick = null;
-                        obj.ontouchend = null;
+                // Draw object based on mode
+                if (obj.isShape) {
+                    // Shapes mode: draw realistic 3D shape
+                    drawRealisticShape(obj.x, obj.y, obj.size, obj.color, obj.value);
+                } else {
+                    // Regular mode: draw balloon or bubble
+                    if (obj.type === 'balloons') {
+                        drawBalloon(obj.x, obj.y, obj.size, obj.color);
+                    } else {
+                        drawBubble(obj.x, obj.y, obj.size, obj.color);
                     }
-                    obj.remove();
+                    // Draw text/value
+                    drawText(obj);
+                }
+                
+                // Remove if off screen (top)
+                if (obj.y < -obj.size * 2) {
                     gameObjects.splice(i, 1);
                     activeObjectCount--;
                 }
@@ -1345,25 +1591,53 @@
         
         masterAnimationId = requestAnimationFrame(masterLoop);
     }
-
-    function handlePop(el, value, color) {
-        // Prevent multiple pops on the same element
-        if (el.dataset.popped === 'true') return;
-        el.dataset.popped = 'true';
+    
+    // Canvas click handling
+    canvas.addEventListener('click', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
         
-        // Immediately stop animation
-        if (el._animationId) {
-            cancelAnimationFrame(el._animationId);
-            el._animationId = null;
+        // Check each object for click (iterate backwards to click topmost first)
+        for (let i = gameObjects.length - 1; i >= 0; i--) {
+            const obj = gameObjects[i];
+            const size = obj.type === 'balloons' ? obj.size * 1.25 : obj.size;
+            
+            if (clickX >= obj.x && clickX <= obj.x + obj.size &&
+                clickY >= obj.y && clickY <= obj.y + size) {
+                handlePop(obj, i);
+                break; // Only pop one object per click
+            }
         }
+    });
+    
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.changedTouches[0];
+        const clickX = touch.clientX - rect.left;
+        const clickY = touch.clientY - rect.top;
         
-        // Use cached position instead of getBoundingClientRect
-        const x = window.innerWidth / 2;
-        const y = window.innerHeight / 2;
+        for (let i = gameObjects.length - 1; i >= 0; i--) {
+            const obj = gameObjects[i];
+            const size = obj.type === 'balloons' ? obj.size * 1.25 : obj.size;
+            
+            if (clickX >= obj.x && clickX <= obj.x + obj.size &&
+                clickY >= obj.y && clickY <= obj.y + size) {
+                handlePop(obj, i);
+                break;
+            }
+        }
+    });
+
+    function handlePop(obj, index) {
+        const value = obj.value;
+        const color = obj.color;
+        const x = obj.x + obj.size/2;
+        const y = obj.y + obj.size/2;
         
         if (value === targetValue) {
             // Correct answer!
-            el.classList.add('pop-effect');
             playPopSound();
             createParticles(x, y, color);
             
@@ -1387,26 +1661,23 @@
                 }
             }
             
-            setTimeout(() => {
-                if (el._handlers) {
-                    el.removeEventListener('keydown', el._handlers.key);
-                }
-                activeObjectCount--;
-                el.remove();
-                updateTarget();
-            }, 300);
+            // Remove object from array immediately
+            gameObjects.splice(index, 1);
+            activeObjectCount--;
+            updateTarget();
         } else {
-            // Wrong answer
-            playWrongSound();
-            el.classList.add('shake-effect');
-            const originalColor = el.style.backgroundColor;
-            el.style.backgroundColor = '#333';
+            // Wrong answer - still pop it but show encouraging message!
+            playPopSound(); // Still fun to pop!
+            createParticles(x, y, color);
+            
+            const tryAgain = tryAgainMessages[Math.floor(Math.random() * tryAgainMessages.length)];
+            showCelebrationText(tryAgain, x, y);
+            
             updateStreak(false);
             
-            setTimeout(() => {
-                el.style.backgroundColor = originalColor;
-                el.classList.remove('shake-effect');
-            }, 300);
+            // Remove the object so they can keep popping
+            gameObjects.splice(index, 1);
+            activeObjectCount--;
         }
     }
 
@@ -1414,6 +1685,10 @@
         playCelebrationSound();
         createConfetti(window.innerWidth / 2, window.innerHeight / 2);
         showCelebrationText('Lesson Complete! 🎉', window.innerWidth / 2, window.innerHeight / 2);
+        
+        // Close controls panel if open
+        const panel = document.getElementById('controls-panel');
+        panel.classList.remove('open');
         
         // Auto-advance to next lesson after 2 seconds
         setTimeout(() => {
@@ -1458,6 +1733,9 @@
         categoryNameDisplay.innerText = currentCategoryKeys[categoryIndex];
         currentLesson = 0;
         completedItems.clear();
+        // Clear all objects when changing category
+        gameObjects = [];
+        activeObjectCount = 0;
         updateLessonDisplay();
         updateTarget();
         streak = 0;
