@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Desktop Racing Reimagined</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -16,14 +16,18 @@
             color: white;
             overflow: hidden;
             user-select: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
         }
 
         #splash-screen {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
@@ -31,6 +35,8 @@
             align-items: center;
             z-index: 1000;
             transition: opacity 0.5s;
+            padding: 20px;
+            overflow-y: auto;
         }
 
         #splash-screen.hidden {
@@ -39,30 +45,38 @@
         }
 
         #splash-screen h1 {
-            font-size: 4rem;
+            font-size: clamp(2rem, 8vw, 4rem);
             text-shadow: 0 4px 20px rgba(0,0,0,0.3);
             margin-bottom: 1rem;
             animation: pulse 2s infinite;
+            text-align: center;
         }
 
         #splash-screen p {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            margin-bottom: 1rem;
+            text-align: center;
         }
 
         #splash-screen .instructions {
             background: rgba(0,0,0,0.3);
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 15px;
-            max-width: 600px;
+            max-width: 90%;
             margin-bottom: 2rem;
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
         }
 
         #splash-screen .instructions ul {
             list-style-position: inside;
             text-align: left;
             margin-top: 1rem;
-            line-height: 1.8;
+            line-height: 1.6;
+        }
+
+        #splash-screen button {
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            padding: clamp(15px, 4vw, 20px) clamp(30px, 8vw, 60px);
         }
 
         @keyframes pulse {
@@ -71,26 +85,26 @@
         }
 
         #controls {
-            position: absolute;
+            position: fixed;
             top: 10px;
             left: 10px;
             z-index: 100;
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 15px;
+            background: rgba(0,0,0,0.9);
+            padding: clamp(10px, 3vw, 20px);
+            border-radius: 10px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            max-width: 400px;
+            max-width: min(90%, 350px);
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
         }
 
         #controls h3 {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: #4fc3f7;
-            font-size: 1.5rem;
+            font-size: clamp(1rem, 3.5vw, 1.3rem);
         }
 
         #camera-container {
-            margin: 15px 0;
+            margin: 10px 0;
             border: 3px solid #4fc3f7;
             border-radius: 10px;
             overflow: hidden;
@@ -101,26 +115,27 @@
             width: 100%;
             height: auto;
             display: block;
+            max-height: 30vh;
         }
 
         .camera-select {
             width: 100%;
-            padding: 10px;
+            padding: clamp(8px, 2vw, 10px);
             margin-bottom: 10px;
             border-radius: 8px;
             border: 2px solid #4fc3f7;
             background: rgba(0,0,0,0.5);
             color: white;
-            font-size: 1rem;
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
         }
 
         button {
             width: 100%;
-            padding: 15px;
+            padding: clamp(12px, 3vw, 15px);
             margin: 5px 0;
             border: none;
             border-radius: 10px;
-            font-size: 1.1rem;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
@@ -162,20 +177,20 @@
             padding: 10px;
             background: rgba(79, 195, 247, 0.2);
             border-radius: 8px;
-            font-size: 0.95rem;
+            font-size: clamp(0.8rem, 2.5vw, 0.95rem);
             line-height: 1.5;
         }
 
         #hud {
-            position: absolute;
+            position: fixed;
             top: 10px;
             right: 10px;
             z-index: 100;
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            min-width: 250px;
+            background: rgba(0,0,0,0.9);
+            padding: clamp(10px, 3vw, 20px);
+            border-radius: 10px;
+            min-width: clamp(150px, 40vw, 250px);
+            font-size: clamp(0.8rem, 2.5vw, 1rem);
         }
 
         #hud.hidden {
@@ -183,33 +198,37 @@
         }
 
         .hud-item {
-            margin: 10px 0;
-            font-size: 1.2rem;
+            margin: clamp(5px, 2vw, 10px) 0;
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
         }
 
         .hud-label {
             color: #4fc3f7;
             font-weight: bold;
+            font-size: clamp(0.8rem, 2vw, 1rem);
         }
 
         .hud-value {
             color: #fff;
-            font-size: 1.5rem;
+            font-size: clamp(1.1rem, 3vw, 1.5rem);
             font-weight: bold;
         }
 
         #game-container {
-            width: 100vw;
-            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         #mobile-controls {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            display: none;
-            gap: 10px;
+            display: flex;
+            gap: clamp(8px, 2vw, 10px);
             z-index: 100;
         }
 
@@ -218,22 +237,23 @@
         }
 
         .mobile-btn {
-            width: 70px;
-            height: 70px;
+            width: clamp(50px, 15vw, 70px);
+            height: clamp(50px, 15vw, 70px);
             border-radius: 50%;
-            background: rgba(79, 195, 247, 0.7);
+            background: rgba(79, 195, 247, 0.8);
             border: 3px solid white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 5vw, 2rem);
             cursor: pointer;
             touch-action: none;
+            user-select: none;
         }
 
         .mobile-btn:active {
             background: rgba(79, 195, 247, 1);
-            transform: scale(0.95);
+            transform: scale(0.9);
         }
 
         canvas {
@@ -326,7 +346,7 @@
                 <li>⚡ Complete laps as fast as possible</li>
             </ul>
         </div>
-        <button onclick="startSetup()" style="width: 300px; padding: 20px; font-size: 1.3rem; background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+        <button onclick="startSetup()" style="width: clamp(250px, 80%, 350px); padding: clamp(15px, 4vw, 20px); font-size: clamp(1.1rem, 4vw, 1.5rem); background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
             🏁 Start Racing!
         </button>
     </div>
@@ -392,7 +412,7 @@
     </div>
 
     <video id="video" width="640" height="480" autoplay playsinline style="display: none;"></video>
-    <canvas id="canvasOutput" width="640" height="480"></canvas>
+    <canvas id="canvasOutput" width="640" height="480" style="display: none;"></canvas>
     <div id="game-container"></div>
 
     <script>
