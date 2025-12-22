@@ -171,6 +171,18 @@
             background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
             color: white;
         }
+        
+        .preset-track-btn {
+            width: 100%;
+            margin: 5px 0;
+            padding: clamp(10px, 2.5vw, 12px);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-size: clamp(0.85rem, 2.2vw, 1rem);
+        }
+        
+        .preset-track-btn:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
 
         #status {
             margin-top: 15px;
@@ -360,6 +372,22 @@
 
     <div id="controls">
         <h3>🏁 Setup Track</h3>
+        
+        <div style="margin-bottom: 15px;">
+            <button id="preset-tracks-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                🏁 Use Preset Tracks (No Camera)
+            </button>
+        </div>
+        
+        <div id="preset-tracks" style="display: none; margin: 10px 0;">
+            <h4 style="color: #4fc3f7; margin-bottom: 10px;">Select Track:</h4>
+            <button class="preset-track-btn" data-track="oval">🔴 Oval Circuit</button>
+            <button class="preset-track-btn" data-track="figure8">♾️ Figure-8</button>
+            <button class="preset-track-btn" data-track="complex">🌀 Complex Circuit</button>
+            <button class="preset-track-btn" data-track="zigzag">⚡ Zigzag Track</button>
+        </div>
+        
+        <div style="text-align: center; margin: 10px 0; color: #888; font-size: 0.9rem;">— OR —</div>
         
         <select id="camera-select" class="camera-select">
             <option>Loading cameras...</option>
@@ -591,6 +619,21 @@
         // IMAGE CAPTURE & PROCESSING
         // ============================================
         
+        // Preset tracks toggle
+        document.getElementById('preset-tracks-btn').addEventListener('click', () => {
+            const presetDiv = document.getElementById('preset-tracks');
+            presetDiv.style.display = presetDiv.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // Preset track buttons
+        document.querySelectorAll('.preset-track-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const trackType = btn.dataset.track;
+                generatePresetTrack(trackType);
+                document.getElementById('preset-tracks').style.display = 'none';
+            });
+        });
+        
         snapBtn.addEventListener('click', () => {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(video, 0, 0, 640, 480);
@@ -701,6 +744,154 @@
                 console.error('Track generation error:', error);
                 status.innerHTML = '❌ Error generating track. Try capturing again with better lighting.';
             }
+        }
+        
+        // ============================================
+        // PRESET TRACK GENERATION
+        // ============================================
+        
+        function generatePresetTrack(trackType) {
+            status.innerHTML = `🏁 Generating ${trackType} track...`;
+            
+            // Clear existing world
+            Composite.clear(engine.world);
+            checkpointsPassed = [];
+            
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            switch(trackType) {
+                case 'oval':
+                    createOvalTrack(w, h);
+                    break;
+                case 'figure8':
+                    createFigure8Track(w, h);
+                    break;
+                case 'complex':
+                    createComplexTrack(w, h);
+                    break;
+                case 'zigzag':
+                    createZigzagTrack(w, h);
+                    break;
+            }
+            
+            addBoundaryWalls();
+            addCheckpoints();
+            createCar();
+            
+            status.innerHTML = `✅ ${trackType.charAt(0).toUpperCase() + trackType.slice(1)} track generated! Ready to race!`;
+            startRaceBtn.disabled = false;
+            playCheckpointSound();
+        }
+        
+        function createOvalTrack(w, h) {
+            // Outer oval barrier
+            const outerPoints = [];
+            for (let i = 0; i <= 40; i++) {
+                const angle = (i / 40) * Math.PI * 2;
+                const x = w/2 + Math.cos(angle) * (w * 0.35);
+                const y = h/2 + Math.sin(angle) * (h * 0.35);
+                outerPoints.push({ x, y });
+            }
+            const outerWall = Bodies.fromVertices(w/2, h/2, [outerPoints], {
+                isStatic: true,
+                render: { fillStyle: '#667eea', strokeStyle: '#fff', lineWidth: 3 }
+            });
+            
+            // Inner oval
+            const innerPoints = [];
+            for (let i = 0; i <= 40; i++) {
+                const angle = (i / 40) * Math.PI * 2;
+                const x = w/2 + Math.cos(angle) * (w * 0.2);
+                const y = h/2 + Math.sin(angle) * (h * 0.2);
+                innerPoints.push({ x, y });
+            }
+            const innerWall = Bodies.fromVertices(w/2, h/2, [innerPoints], {
+                isStatic: true,
+                render: { fillStyle: '#764ba2', strokeStyle: '#fff', lineWidth: 3 }
+            });
+            
+            Composite.add(engine.world, [outerWall, innerWall]);
+        }
+        
+        function createFigure8Track(w, h) {
+            // Left loop
+            const leftLoop = [];
+            for (let i = 0; i <= 20; i++) {
+                const angle = (i / 20) * Math.PI * 2;
+                const x = w * 0.35 + Math.cos(angle) * (w * 0.15);
+                const y = h/2 + Math.sin(angle) * (h * 0.25);
+                leftLoop.push({ x, y });
+            }
+            
+            // Right loop
+            const rightLoop = [];
+            for (let i = 0; i <= 20; i++) {
+                const angle = (i / 20) * Math.PI * 2;
+                const x = w * 0.65 + Math.cos(angle) * (w * 0.15);
+                const y = h/2 + Math.sin(angle) * (h * 0.25);
+                rightLoop.push({ x, y });
+            }
+            
+            const leftObstacle = Bodies.fromVertices(w * 0.35, h/2, [leftLoop], {
+                isStatic: true,
+                render: { fillStyle: '#667eea', strokeStyle: '#fff', lineWidth: 3 }
+            });
+            
+            const rightObstacle = Bodies.fromVertices(w * 0.65, h/2, [rightLoop], {
+                isStatic: true,
+                render: { fillStyle: '#764ba2', strokeStyle: '#fff', lineWidth: 3 }
+            });
+            
+            Composite.add(engine.world, [leftObstacle, rightObstacle]);
+        }
+        
+        function createComplexTrack(w, h) {
+            // Create random obstacles
+            const obstacles = [];
+            
+            // S-curve barriers
+            for (let i = 0; i < 3; i++) {
+                const x = w * (0.25 + i * 0.25);
+                const y = h * 0.3 + Math.sin(i) * h * 0.2;
+                const rect = Bodies.rectangle(x, y, w * 0.15, h * 0.08, {
+                    isStatic: true,
+                    angle: i * 0.3,
+                    render: { fillStyle: `hsl(${i * 60 + 250}, 70%, 60%)`, strokeStyle: '#fff', lineWidth: 2 }
+                });
+                obstacles.push(rect);
+            }
+            
+            // Bottom barriers
+            for (let i = 0; i < 2; i++) {
+                const x = w * (0.35 + i * 0.3);
+                const y = h * 0.7;
+                const circle = Bodies.circle(x, y, w * 0.08, {
+                    isStatic: true,
+                    render: { fillStyle: `hsl(${i * 80 + 200}, 70%, 60%)`, strokeStyle: '#fff', lineWidth: 2 }
+                });
+                obstacles.push(circle);
+            }
+            
+            Composite.add(engine.world, obstacles);
+        }
+        
+        function createZigzagTrack(w, h) {
+            const obstacles = [];
+            
+            // Create zigzag pattern
+            for (let i = 0; i < 5; i++) {
+                const y = h * (0.2 + i * 0.15);
+                const x = (i % 2 === 0) ? w * 0.3 : w * 0.7;
+                
+                const barrier = Bodies.rectangle(x, y, w * 0.25, h * 0.05, {
+                    isStatic: true,
+                    render: { fillStyle: `hsl(${i * 40 + 220}, 70%, 60%)`, strokeStyle: '#fff', lineWidth: 2 }
+                });
+                obstacles.push(barrier);
+            }
+            
+            Composite.add(engine.world, obstacles);
         }
 
         function addBoundaryWalls() {
