@@ -220,6 +220,13 @@
             left: 0;
             width: 100%;
             height: 100%;
+            z-index: 1;
+        }
+        
+        #game-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
 
         #mobile-controls {
@@ -947,6 +954,7 @@
             checkpointsPassed = [];
             
             document.getElementById('controls').style.display = 'none';
+            document.getElementById('camera-container').style.display = 'none';
             document.getElementById('hud').classList.remove('hidden');
             document.querySelector('.controls-hint').classList.add('active');
             
