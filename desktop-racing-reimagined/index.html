@@ -819,6 +819,23 @@
         }
         
         function createOvalTrack(w, h) {
+            // Create grass/dirt texture for track walls
+            const wallTexture = 'data:image/svg+xml;base64,' + btoa(`
+                <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="grassPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <rect width="20" height="20" fill="#2d5016"/>
+                            <circle cx="5" cy="5" r="1" fill="#3a6b1f"/>
+                            <circle cx="15" cy="8" r="1" fill="#3a6b1f"/>
+                            <circle cx="8" cy="15" r="1" fill="#3a6b1f"/>
+                            <circle cx="18" cy="18" r="1" fill="#3a6b1f"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100" height="100" fill="url(#grassPattern)"/>
+                    <rect x="0" y="0" width="100" height="100" fill="#2d5016" opacity="0.3"/>
+                </svg>
+            `);
+            
             // Outer oval barrier
             const outerPoints = [];
             for (let i = 0; i <= 40; i++) {
@@ -829,7 +846,7 @@
             }
             const outerWall = Bodies.fromVertices(w/2, h/2, [outerPoints], {
                 isStatic: true,
-                render: { fillStyle: '#667eea', strokeStyle: '#fff', lineWidth: 3 }
+                render: { sprite: { texture: wallTexture, xScale: 6, yScale: 6 } }
             });
             
             // Inner oval
@@ -842,13 +859,30 @@
             }
             const innerWall = Bodies.fromVertices(w/2, h/2, [innerPoints], {
                 isStatic: true,
-                render: { fillStyle: '#764ba2', strokeStyle: '#fff', lineWidth: 3 }
+                render: { sprite: { texture: wallTexture, xScale: 4, yScale: 4 } }
             });
             
             Composite.add(engine.world, [outerWall, innerWall]);
         }
         
         function createFigure8Track(w, h) {
+            // Create wall texture
+            const wallTexture = 'data:image/svg+xml;base64,' + btoa(`
+                <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="grassPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <rect width="20" height="20" fill="#2d5016"/>
+                            <circle cx="5" cy="5" r="1" fill="#3a6b1f"/>
+                            <circle cx="15" cy="8" r="1" fill="#3a6b1f"/>
+                            <circle cx="8" cy="15" r="1" fill="#3a6b1f"/>
+                            <circle cx="18" cy="18" r="1" fill="#3a6b1f"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100" height="100" fill="url(#grassPattern)"/>
+                    <rect x="0" y="0" width="100" height="100" fill="#2d5016" opacity="0.3"/>
+                </svg>
+            `);
+            
             // Left loop
             const leftLoop = [];
             for (let i = 0; i <= 20; i++) {
@@ -869,18 +903,33 @@
             
             const leftObstacle = Bodies.fromVertices(w * 0.35, h/2, [leftLoop], {
                 isStatic: true,
-                render: { fillStyle: '#667eea', strokeStyle: '#fff', lineWidth: 3 }
+                render: { sprite: { texture: wallTexture, xScale: 4, yScale: 4 } }
             });
             
             const rightObstacle = Bodies.fromVertices(w * 0.65, h/2, [rightLoop], {
                 isStatic: true,
-                render: { fillStyle: '#764ba2', strokeStyle: '#fff', lineWidth: 3 }
+                render: { sprite: { texture: wallTexture, xScale: 4, yScale: 4 } }
             });
             
             Composite.add(engine.world, [leftObstacle, rightObstacle]);
         }
         
         function createComplexTrack(w, h) {
+            // Create rock/barrier texture
+            const rockTexture = 'data:image/svg+xml;base64,' + btoa(`
+                <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="rockGrad">
+                            <stop offset="0%" style="stop-color:#888;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#444;stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <polygon points="50,10 90,40 80,85 20,85 10,40" fill="url(#rockGrad)" stroke="#333" stroke-width="3"/>
+                    <circle cx="35" cy="45" r="8" fill="#555" opacity="0.5"/>
+                    <circle cx="60" cy="50" r="6" fill="#666" opacity="0.5"/>
+                </svg>
+            `);
+            
             // Create random obstacles
             const obstacles = [];
             
@@ -891,18 +940,22 @@
                 const rect = Bodies.rectangle(x, y, w * 0.15, h * 0.08, {
                     isStatic: true,
                     angle: i * 0.3,
-                    render: { fillStyle: `hsl(${i * 60 + 250}, 70%, 60%)`, strokeStyle: '#fff', lineWidth: 2 }
+                    render: { 
+                        sprite: { texture: rockTexture, xScale: (w * 0.15) / 100, yScale: (h * 0.08) / 100 }
+                    }
                 });
                 obstacles.push(rect);
             }
             
-            // Bottom barriers
+            // Bottom barriers (circular rocks)
             for (let i = 0; i < 2; i++) {
                 const x = w * (0.35 + i * 0.3);
                 const y = h * 0.7;
                 const circle = Bodies.circle(x, y, w * 0.08, {
                     isStatic: true,
-                    render: { fillStyle: `hsl(${i * 80 + 200}, 70%, 60%)`, strokeStyle: '#fff', lineWidth: 2 }
+                    render: { 
+                        sprite: { texture: rockTexture, xScale: (w * 0.16) / 100, yScale: (w * 0.16) / 100 }
+                    }
                 });
                 obstacles.push(circle);
             }
@@ -911,6 +964,21 @@
         }
         
         function createZigzagTrack(w, h) {
+            // Create barrier texture (traffic cones/barriers)
+            const barrierTexture = 'data:image/svg+xml;base64,' + btoa(`
+                <svg width="100" height="50" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="coneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#cc4400;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="10" y="5" width="80" height="40" rx="5" fill="url(#coneGrad)" stroke="#fff" stroke-width="3"/>
+                    <rect x="20" y="15" width="60" height="8" fill="#fff" opacity="0.8"/>
+                    <rect x="20" y="30" width="60" height="8" fill="#fff" opacity="0.8"/>
+                </svg>
+            `);
+            
             const obstacles = [];
             
             // Create zigzag pattern
@@ -920,7 +988,9 @@
                 
                 const barrier = Bodies.rectangle(x, y, w * 0.25, h * 0.05, {
                     isStatic: true,
-                    render: { fillStyle: `hsl(${i * 40 + 220}, 70%, 60%)`, strokeStyle: '#fff', lineWidth: 2 }
+                    render: { 
+                        sprite: { texture: barrierTexture, xScale: (w * 0.25) / 100, yScale: (h * 0.05) / 50 }
+                    }
                 });
                 obstacles.push(barrier);
             }
@@ -930,22 +1000,40 @@
 
         function addBoundaryWalls() {
             const thickness = 50;
+            const barrierTexture = 'data:image/svg+xml;base64,' + btoa(`
+                <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
+                    <pattern id="tirePattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+                        <circle cx="25" cy="25" r="20" fill="#333" stroke="#666" stroke-width="3"/>
+                        <circle cx="25" cy="25" r="12" fill="#222" stroke="#555" stroke-width="2"/>
+                    </pattern>
+                    <rect width="50" height="50" fill="url(#tirePattern)"/>
+                </svg>
+            `);
+            
             const walls = [
                 Bodies.rectangle(window.innerWidth / 2, -thickness / 2, window.innerWidth, thickness, {
                     isStatic: true,
-                    render: { fillStyle: '#ff4444' }
+                    render: { 
+                        sprite: { texture: barrierTexture, xScale: window.innerWidth / 50, yScale: 1 }
+                    }
                 }),
                 Bodies.rectangle(window.innerWidth / 2, window.innerHeight + thickness / 2, window.innerWidth, thickness, {
                     isStatic: true,
-                    render: { fillStyle: '#ff4444' }
+                    render: { 
+                        sprite: { texture: barrierTexture, xScale: window.innerWidth / 50, yScale: 1 }
+                    }
                 }),
                 Bodies.rectangle(-thickness / 2, window.innerHeight / 2, thickness, window.innerHeight, {
                     isStatic: true,
-                    render: { fillStyle: '#ff4444' }
+                    render: { 
+                        sprite: { texture: barrierTexture, xScale: 1, yScale: window.innerHeight / 50 }
+                    }
                 }),
                 Bodies.rectangle(window.innerWidth + thickness / 2, window.innerHeight / 2, thickness, window.innerHeight, {
                     isStatic: true,
-                    render: { fillStyle: '#ff4444' }
+                    render: { 
+                        sprite: { texture: barrierTexture, xScale: 1, yScale: window.innerHeight / 50 }
+                    }
                 })
             ];
             
@@ -1104,12 +1192,37 @@
             carStartX = 150;
             carStartY = window.innerHeight / 2;
             
-            // Car body (main rectangle)
+            // Create race car sprite (top-down view)
+            const carSprite = 'data:image/svg+xml;base64,' + btoa(`
+                <svg width="60" height="40" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Car body -->
+                    <defs>
+                        <linearGradient id="carGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ff4444;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#cc0000;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <ellipse cx="30" cy="20" rx="28" ry="18" fill="url(#carGrad)" stroke="#fff" stroke-width="2"/>
+                    <!-- Front bumper -->
+                    <rect x="50" y="15" width="8" height="10" rx="3" fill="#666" stroke="#fff" stroke-width="1"/>
+                    <!-- Rear spoiler -->
+                    <rect x="2" y="12" width="6" height="16" rx="2" fill="#333" stroke="#fff" stroke-width="1"/>
+                    <!-- Side mirrors -->
+                    <circle cx="15" cy="5" r="3" fill="#4fc3f7" stroke="#fff" stroke-width="1"/>
+                    <circle cx="15" cy="35" r="3" fill="#4fc3f7" stroke="#fff" stroke-width="1"/>
+                    <!-- Racing stripes -->
+                    <rect x="20" y="8" width="4" height="24" fill="#fff" opacity="0.8"/>
+                    <rect x="36" y="8" width="4" height="24" fill="#fff" opacity="0.8"/>
+                </svg>
+            `);
+            
             const carBody = Bodies.rectangle(carStartX, carStartY, 60, 40, {
                 render: {
-                    fillStyle: '#ff4444',
-                    strokeStyle: '#fff',
-                    lineWidth: 3
+                    sprite: {
+                        texture: carSprite,
+                        xScale: 1,
+                        yScale: 1
+                    }
                 },
                 friction: 0.1,
                 frictionAir: 0.05,
