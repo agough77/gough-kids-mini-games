@@ -1007,68 +1007,141 @@
         
         // Draw player car
         function drawPlayerCar() {
-            const carWidth = 100;
-            const carHeight = 140;
+            const carWidth = 120;
+            const carHeight = 160;
             const carX = canvas.width / 2;
             const carY = canvas.height - carHeight - 60;
             
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
-            ctx.ellipse(carX, carY + carHeight + 10, carWidth * 0.6, 15, 0, 0, Math.PI * 2);
+            // Shadow (oval under car)
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath();
+            ctx.ellipse(carX, carY + carHeight + 15, carWidth * 0.5, 20, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // Car body (red sports car)
-            const gradient = ctx.createLinearGradient(carX - carWidth / 2, carY, carX + carWidth / 2, carY);
-            gradient.addColorStop(0, '#cc0000');
-            gradient.addColorStop(0.5, '#ff0000');
-            gradient.addColorStop(1, '#cc0000');
-            ctx.fillStyle = gradient;
+            // Rear bumper/back
+            ctx.fillStyle = '#990000';
+            ctx.fillRect(carX - carWidth * 0.45, carY, carWidth * 0.9, 20);
             
-            // Main body
+            // Main car body (tapered)
+            const bodyGradient = ctx.createLinearGradient(carX - carWidth / 2, carY, carX + carWidth / 2, carY);
+            bodyGradient.addColorStop(0, '#b30000');
+            bodyGradient.addColorStop(0.3, '#ff0000');
+            bodyGradient.addColorStop(0.7, '#ff0000');
+            bodyGradient.addColorStop(1, '#b30000');
+            ctx.fillStyle = bodyGradient;
+            
             ctx.beginPath();
-            ctx.moveTo(carX, carY - 10);
-            ctx.lineTo(carX + carWidth / 2 - 5, carY + 20);
-            ctx.lineTo(carX + carWidth / 2, carY + carHeight);
-            ctx.lineTo(carX - carWidth / 2, carY + carHeight);
-            ctx.lineTo(carX - carWidth / 2 + 5, carY + 20);
+            ctx.moveTo(carX - carWidth * 0.45, carY + 20); // Back left
+            ctx.lineTo(carX - carWidth * 0.38, carY + carHeight * 0.5); // Mid left
+            ctx.lineTo(carX - carWidth * 0.25, carY + carHeight - 15); // Front left
+            ctx.lineTo(carX, carY + carHeight); // Front tip
+            ctx.lineTo(carX + carWidth * 0.25, carY + carHeight - 15); // Front right
+            ctx.lineTo(carX + carWidth * 0.38, carY + carHeight * 0.5); // Mid right
+            ctx.lineTo(carX + carWidth * 0.45, carY + 20); // Back right
             ctx.closePath();
             ctx.fill();
             
-            // Windshield
-            ctx.fillStyle = '#87CEEB';
+            // Cockpit/windshield
+            ctx.fillStyle = 'rgba(135, 206, 235, 0.8)';
             ctx.beginPath();
-            ctx.moveTo(carX, carY + 10);
-            ctx.lineTo(carX + carWidth / 3, carY + 35);
-            ctx.lineTo(carX - carWidth / 3, carY + 35);
+            ctx.moveTo(carX - carWidth * 0.25, carY + 40);
+            ctx.lineTo(carX - carWidth * 0.2, carY + 80);
+            ctx.lineTo(carX + carWidth * 0.2, carY + 80);
+            ctx.lineTo(carX + carWidth * 0.25, carY + 40);
             ctx.closePath();
             ctx.fill();
             
-            // Racing stripes
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(carX - 8, carY, 3, carHeight);
-            ctx.fillRect(carX + 5, carY, 3, carHeight);
+            // Windshield glare
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(carX - carWidth * 0.15, carY + 45);
+            ctx.lineTo(carX - carWidth * 0.12, carY + 70);
+            ctx.lineTo(carX, carY + 70);
+            ctx.lineTo(carX, carY + 45);
+            ctx.closePath();
+            ctx.fill();
             
-            // Headlights
+            // Racing stripes (wider, more visible)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(carX - 12, carY + 25, 5, carHeight - 30);
+            ctx.fillRect(carX + 7, carY + 25, 5, carHeight - 30);
+            
+            // Side mirrors
+            ctx.fillStyle = '#333';
+            ctx.fillRect(carX - carWidth * 0.42, carY + 50, 8, 12);
+            ctx.fillRect(carX + carWidth * 0.42 - 8, carY + 50, 8, 12);
+            
+            // Front hood details
+            ctx.strokeStyle = '#cc0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(carX - carWidth * 0.2, carY + carHeight - 40);
+            ctx.lineTo(carX - carWidth * 0.15, carY + carHeight - 20);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(carX + carWidth * 0.2, carY + carHeight - 40);
+            ctx.lineTo(carX + carWidth * 0.15, carY + carHeight - 20);
+            ctx.stroke();
+            
+            // Headlights (bright and prominent)
             ctx.fillStyle = '#FFFF00';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#FFFF00';
             ctx.beginPath();
-            ctx.arc(carX - carWidth / 3, carY + carHeight - 10, 5, 0, Math.PI * 2);
+            ctx.arc(carX - carWidth * 0.18, carY + carHeight - 15, 7, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.arc(carX + carWidth / 3, carY + carHeight - 10, 5, 0, Math.PI * 2);
+            ctx.arc(carX + carWidth * 0.18, carY + carHeight - 15, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Headlight highlights
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(carX - carWidth * 0.18 - 2, carY + carHeight - 17, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(carX + carWidth * 0.18 - 2, carY + carHeight - 17, 2, 0, Math.PI * 2);
             ctx.fill();
             
-            // Wheels
+            // Rear wheels (visible from behind)
             ctx.fillStyle = '#000';
             ctx.beginPath();
-            ctx.ellipse(carX - carWidth / 2 + 10, carY + carHeight - 20, 8, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(carX - carWidth * 0.35, carY + 30, 12, 16, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.beginPath();
-            ctx.ellipse(carX + carWidth / 2 - 10, carY + carHeight - 20, 8, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(carX + carWidth * 0.35, carY + 30, 12, 16, 0, 0, Math.PI * 2);
             ctx.fill();
             
-            // Spoiler
+            // Tire shine
+            ctx.fillStyle = '#333';
+            ctx.beginPath();
+            ctx.ellipse(carX - carWidth * 0.35, carY + 30, 6, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(carX + carWidth * 0.35, carY + 30, 6, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Front wheels (partial view)
             ctx.fillStyle = '#000';
-            ctx.fillRect(carX - carWidth / 2 + 5, carY + 5, carWidth - 10, 6);
+            ctx.beginPath();
+            ctx.ellipse(carX - carWidth * 0.22, carY + carHeight - 35, 10, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(carX + carWidth * 0.22, carY + carHeight - 35, 10, 14, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Spoiler (rear wing)
+            ctx.fillStyle = '#000';
+            ctx.fillRect(carX - carWidth * 0.4, carY - 5, carWidth * 0.8, 8);
+            // Spoiler supports
+            ctx.fillRect(carX - carWidth * 0.35, carY, 6, 15);
+            ctx.fillRect(carX + carWidth * 0.35 - 6, carY, 6, 15);
+            
+            // Tail lights
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(carX - carWidth * 0.38, carY + 8, 8, 8);
+            ctx.fillRect(carX + carWidth * 0.38 - 8, carY + 8, 8, 8);
         }
         
         // Game loop
