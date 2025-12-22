@@ -783,21 +783,39 @@
         function render() {
             const track = tracks[currentTrack];
             
-            // Sky
-            ctx.fillStyle = track.skyColor;
+            // Sky gradient
+            const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height / 2);
+            skyGradient.addColorStop(0, track.skyColor);
+            skyGradient.addColorStop(1, track.horizonColor);
+            ctx.fillStyle = skyGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            
+            // Add sun/moon
+            if (currentTrack === 'night') {
+                ctx.fillStyle = '#FFE5B4';
+                ctx.beginPath();
+                ctx.arc(canvas.width * 0.8, 80, 40, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.fillStyle = '#FFFF00';
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = '#FFFF00';
+                ctx.beginPath();
+                ctx.arc(canvas.width * 0.85, 100, 50, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
             
             // Ground
             ctx.fillStyle = track.groundColor;
             ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
             
-            // Horizon
-            ctx.fillStyle = track.horizonColor;
-            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
-            
             // Road segments
             const baseSegment = Math.floor(distance / segmentLength);
             const basePercent = (distance % segmentLength) / segmentLength;
+            
+            let lastProjectedY = canvas.height;
+            let lastProjectedX = canvas.width / 2;
             
             // Render from far to near
             for (let n = 300; n > 0; n--) {
@@ -819,8 +837,30 @@
                 
                 if (projectedY < 0 || projectedY > canvas.height) continue;
                 
-                // Road
-                ctx.fillStyle = track.roadColor;
+                // Grass/sides with texture
+                ctx.fillStyle = track.grassColor;
+                ctx.fillRect(0, projectedY, canvas.width, canvas.height - projectedY);
+                
+                // Add scenery objects
+                if (n % 20 === 0 && projectedWidth > 30) {
+                    const sceneryScale = Math.max(10, scale * 200);
+                    
+                    // Left side scenery
+                    const leftX = projectedCenterX - projectedWidth / 2 - sceneryScale * 2;
+                    if (leftX > 0 && leftX < canvas.width) {
+                        drawScenery(leftX, projectedY - sceneryScale, sceneryScale, track);
+                    }
+                    
+                    // Right side scenery
+                    const rightX = projectedCenterX + projectedWidth / 2 + sceneryScale * 2;
+                    if (rightX > 0 && rightX < canvas.width) {
+                        drawScenery(rightX, projectedY - sceneryScale, sceneryScale, track);
+                    }
+                }
+                
+                // Road with stripes for alternating segments
+                const isStripe = Math.floor((baseSegment + n) / 3) % 2 === 0;
+                ctx.fillStyle = isStripe ? track.roadColor : lightenColor(track.roadColor, 10);
                 ctx.fillRect(
                     projectedCenterX - projectedWidth / 2,
                     projectedY,
@@ -828,20 +868,35 @@
                     canvas.height - projectedY
                 );
                 
-                // Grass/sides
-                ctx.fillStyle = track.grassColor;
-                ctx.fillRect(0, projectedY, projectedCenterX - projectedWidth / 2, canvas.height - projectedY);
-                ctx.fillRect(projectedCenterX + projectedWidth / 2, projectedY, canvas.width, canvas.height - projectedY);
+                // Road edge lines
+                if (projectedWidth > 40) {
+                    ctx.fillStyle = '#fff';
+                    const edgeWidth = Math.max(2, projectedWidth * 0.02);
+                    // Left edge
+                    ctx.fillRect(
+                        projectedCenterX - projectedWidth / 2,
+                        projectedY,
+                        edgeWidth,
+                        Math.max(2, scale * 50)
+                    );
+                    // Right edge
+                    ctx.fillRect(
+                        projectedCenterX + projectedWidth / 2 - edgeWidth,
+                        projectedY,
+                        edgeWidth,
+                        Math.max(2, scale * 50)
+                    );
+                }
                 
-                // Road lines
-                if (n % 5 === 0 && projectedWidth > 50) {
+                // Center line (dashed)
+                if (n % 3 === 0 && projectedWidth > 50) {
                     ctx.fillStyle = track.roadLineColor;
-                    const lineWidth = Math.max(2, projectedWidth * 0.02);
+                    const lineWidth = Math.max(2, projectedWidth * 0.03);
                     ctx.fillRect(
                         projectedCenterX - lineWidth / 2,
                         projectedY,
                         lineWidth,
-                        Math.max(2, scale * 50)
+                        Math.max(3, scale * 60)
                     );
                 }
                 
@@ -849,52 +904,19 @@
                 cars.forEach(car => {
                     if (Math.floor(car.segment) === n) {
                         const carProjectedX = projectedCenterX + (car.x - 0.5) * projectedWidth;
-                        const carWidth = Math.max(20, projectedWidth * 0.1);
-                        const carHeight = Math.max(30, carWidth * 1.5);
+                        const carWidth = Math.max(30, projectedWidth * 0.12);
+                        const carHeight = Math.max(40, carWidth * 1.6);
                         
-                        // Car body
-                        ctx.fillStyle = car.color;
-                        ctx.fillRect(
-                            carProjectedX - carWidth / 2,
-                            projectedY - carHeight,
-                            carWidth,
-                            carHeight
-                        );
-                        
-                        // Car windows
-                        ctx.fillStyle = '#87CEEB';
-                        ctx.fillRect(
-                            carProjectedX - carWidth / 3,
-                            projectedY - carHeight * 0.7,
-                            carWidth * 0.66,
-                            carHeight * 0.4
-                        );
+                        drawCar(carProjectedX, projectedY - carHeight, carWidth, carHeight, car.color);
                     }
                 });
+                
+                lastProjectedY = projectedY;
+                lastProjectedX = projectedCenterX;
             }
             
             // Draw player car
-            const carWidth = 80;
-            const carHeight = 120;
-            const carX = canvas.width / 2;
-            const carY = canvas.height - carHeight - 50;
-            
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(carX - carWidth / 2 + 5, carY + carHeight - 10, carWidth, 10);
-            
-            // Car body
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(carX - carWidth / 2, carY, carWidth, carHeight);
-            
-            // Car details
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(carX - carWidth / 3, carY + 20, carWidth * 0.66, carHeight * 0.3);
-            
-            // Racing stripes
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(carX - 10, carY, 4, carHeight);
-            ctx.fillRect(carX + 6, carY, 4, carHeight);
+            drawPlayerCar();
             
             // Finish line
             if (distance > finishDistance - 1000) {
@@ -912,6 +934,141 @@
                     }
                 }
             }
+        }
+        
+        // Helper function to lighten colors
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace("#",""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, (num >> 16) + amt);
+            const G = Math.min(255, (num >> 8 & 0x00FF) + amt);
+            const B = Math.min(255, (num & 0x0000FF) + amt);
+            return "#" + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+        
+        // Draw scenery objects
+        function drawScenery(x, y, size, track) {
+            if (currentTrack === 'desert') {
+                // Cacti
+                ctx.fillStyle = '#2d5016';
+                ctx.fillRect(x - size * 0.15, y, size * 0.3, size);
+                ctx.fillRect(x - size * 0.4, y + size * 0.3, size * 0.25, size * 0.4);
+                ctx.fillRect(x + size * 0.15, y + size * 0.4, size * 0.25, size * 0.3);
+            } else if (currentTrack === 'city' || currentTrack === 'night') {
+                // Buildings
+                const buildingHeight = size * (1 + Math.random());
+                ctx.fillStyle = currentTrack === 'night' ? '#1a1a3e' : '#708090';
+                ctx.fillRect(x - size * 0.4, y - buildingHeight, size * 0.8, buildingHeight + size);
+                // Windows
+                ctx.fillStyle = currentTrack === 'night' ? '#FFD700' : '#87CEEB';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(x - size * 0.25, y - buildingHeight + i * size * 0.3, size * 0.15, size * 0.15);
+                    ctx.fillRect(x + size * 0.05, y - buildingHeight + i * size * 0.3, size * 0.15, size * 0.15);
+                }
+            } else {
+                // Trees
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(x - size * 0.1, y, size * 0.2, size * 0.6);
+                ctx.fillStyle = '#228B22';
+                ctx.beginPath();
+                ctx.arc(x, y - size * 0.2, size * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Draw traffic car
+        function drawCar(x, y, width, height, color) {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(x - width / 2, y + height, width, height * 0.1);
+            
+            // Car body
+            ctx.fillStyle = color;
+            ctx.fillRect(x - width / 2, y, width, height);
+            
+            // Car roof/window
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(x - width * 0.35, y + height * 0.2, width * 0.7, height * 0.35);
+            
+            // Highlights
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(x - width / 2, y, width * 0.2, height * 0.4);
+            
+            // Wheels (black circles)
+            ctx.fillStyle = '#000';
+            const wheelSize = Math.max(2, width * 0.15);
+            ctx.beginPath();
+            ctx.arc(x - width * 0.3, y + height * 0.9, wheelSize, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + width * 0.3, y + height * 0.9, wheelSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Draw player car
+        function drawPlayerCar() {
+            const carWidth = 100;
+            const carHeight = 140;
+            const carX = canvas.width / 2;
+            const carY = canvas.height - carHeight - 60;
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.ellipse(carX, carY + carHeight + 10, carWidth * 0.6, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Car body (red sports car)
+            const gradient = ctx.createLinearGradient(carX - carWidth / 2, carY, carX + carWidth / 2, carY);
+            gradient.addColorStop(0, '#cc0000');
+            gradient.addColorStop(0.5, '#ff0000');
+            gradient.addColorStop(1, '#cc0000');
+            ctx.fillStyle = gradient;
+            
+            // Main body
+            ctx.beginPath();
+            ctx.moveTo(carX, carY - 10);
+            ctx.lineTo(carX + carWidth / 2 - 5, carY + 20);
+            ctx.lineTo(carX + carWidth / 2, carY + carHeight);
+            ctx.lineTo(carX - carWidth / 2, carY + carHeight);
+            ctx.lineTo(carX - carWidth / 2 + 5, carY + 20);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Windshield
+            ctx.fillStyle = '#87CEEB';
+            ctx.beginPath();
+            ctx.moveTo(carX, carY + 10);
+            ctx.lineTo(carX + carWidth / 3, carY + 35);
+            ctx.lineTo(carX - carWidth / 3, carY + 35);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Racing stripes
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(carX - 8, carY, 3, carHeight);
+            ctx.fillRect(carX + 5, carY, 3, carHeight);
+            
+            // Headlights
+            ctx.fillStyle = '#FFFF00';
+            ctx.beginPath();
+            ctx.arc(carX - carWidth / 3, carY + carHeight - 10, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(carX + carWidth / 3, carY + carHeight - 10, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Wheels
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(carX - carWidth / 2 + 10, carY + carHeight - 20, 8, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(carX + carWidth / 2 - 10, carY + carHeight - 20, 8, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Spoiler
+            ctx.fillStyle = '#000';
+            ctx.fillRect(carX - carWidth / 2 + 5, carY + 5, carWidth - 10, 6);
         }
         
         // Game loop
