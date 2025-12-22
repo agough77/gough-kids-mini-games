@@ -2,1613 +2,658 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Desktop Racing Reimagined</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desktop Racing - Pole Position Style</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #fff;
             overflow: hidden;
             user-select: none;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            touch-action: none;
         }
 
-        #splash-screen {
+        #gameCanvas {
+            display: block;
+            background: #87CEEB;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #menu {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
-            transition: opacity 0.5s;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        #splash-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #splash-screen h1 {
-            font-size: clamp(2rem, 8vw, 4rem);
-            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            margin-bottom: 1rem;
-            animation: pulse 2s infinite;
-            text-align: center;
-        }
-
-        #splash-screen p {
-            font-size: clamp(1rem, 4vw, 1.5rem);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        #splash-screen .instructions {
-            background: rgba(0,0,0,0.3);
-            padding: 1.5rem;
-            border-radius: 15px;
-            max-width: 90%;
-            margin-bottom: 2rem;
-            font-size: clamp(0.9rem, 3vw, 1.1rem);
-        }
-
-        #splash-screen .instructions ul {
-            list-style-position: inside;
-            text-align: left;
-            margin-top: 1rem;
-            line-height: 1.6;
-        }
-
-        #splash-screen button {
-            font-size: clamp(1.1rem, 4vw, 1.5rem);
-            padding: clamp(15px, 4vw, 20px) clamp(30px, 8vw, 60px);
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        #controls {
-            position: fixed;
-            top: 10px;
-            left: 10px;
             z-index: 100;
-            background: rgba(0,0,0,0.9);
-            padding: clamp(10px, 3vw, 20px);
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            max-width: min(90%, 350px);
-            font-size: clamp(0.8rem, 2.5vw, 1rem);
+            padding: 20px;
         }
 
-        #controls h3 {
-            margin-bottom: 10px;
-            color: #4fc3f7;
-            font-size: clamp(1rem, 3.5vw, 1.3rem);
+        #menu.hidden {
+            display: none;
         }
 
-        #camera-container {
-            margin: 10px 0;
-            border: 3px solid #4fc3f7;
-            border-radius: 10px;
-            overflow: hidden;
-            background: #000;
+        #menu h1 {
+            font-size: clamp(2rem, 10vw, 5rem);
+            color: #00ff00;
+            text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+            margin-bottom: 2rem;
+            animation: glow 2s infinite;
         }
 
-        #video-preview {
-            width: 100%;
-            height: auto;
-            display: block;
-            max-height: 30vh;
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00; }
+            50% { text-shadow: 0 0 30px #00ff00, 0 0 60px #00ff00, 0 0 80px #00ff00; }
         }
 
-        .camera-select {
-            width: 100%;
-            padding: clamp(8px, 2vw, 10px);
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border: 2px solid #4fc3f7;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            font-size: clamp(0.8rem, 2.5vw, 1rem);
+        .menu-section {
+            background: rgba(0,0,0,0.7);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            border: 2px solid #00ff00;
+            max-width: 90%;
+        }
+
+        .menu-section h2 {
+            color: #00ff00;
+            margin-bottom: 1rem;
+            font-size: clamp(1.2rem, 5vw, 2rem);
+        }
+
+        .track-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
         }
 
         button {
-            width: 100%;
-            padding: clamp(12px, 3vw, 15px);
-            margin: 5px 0;
-            border: none;
+            background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+            color: #000;
+            border: 3px solid #00ff00;
+            padding: 15px 30px;
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
             border-radius: 10px;
-            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-            font-weight: bold;
-            cursor: pointer;
             transition: all 0.3s;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        button:not(:disabled):hover {
+        button:hover {
+            background: linear-gradient(135deg, #00ff00 0%, #00ff00 100%);
+            box-shadow: 0 0 30px rgba(0,255,0,0.8);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
 
-        #snap {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        #process {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-        }
-
-        #reset {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            color: white;
-        }
-
-        #start-race {
-            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
-            color: white;
-        }
-        
-        .preset-track-btn {
-            width: 100%;
-            margin: 5px 0;
-            padding: clamp(10px, 2.5vw, 12px);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-size: clamp(0.85rem, 2.2vw, 1rem);
-        }
-        
-        .preset-track-btn:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-
-        #status {
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(79, 195, 247, 0.2);
-            border-radius: 8px;
-            font-size: clamp(0.8rem, 2.5vw, 0.95rem);
-            line-height: 1.5;
-        }
-        
-        #pause-btn {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 200;
-            padding: clamp(10px, 3vw, 15px) clamp(20px, 5vw, 30px);
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-            border: 3px solid white;
-            border-radius: 50px;
-            font-size: clamp(1rem, 3vw, 1.3rem);
-            font-weight: bold;
-            color: white;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            display: none;
-        }
-        
-        #pause-btn:hover {
-            transform: translateX(-50%) scale(1.05);
-        }
-        
-        #pause-btn.active {
-            display: block;
+        button:active {
+            transform: translateY(0);
         }
 
         #hud {
             position: fixed;
             top: 10px;
+            left: 10px;
             right: 10px;
-            z-index: 100;
-            background: rgba(0,0,0,0.9);
-            padding: clamp(10px, 3vw, 20px);
-            border-radius: 10px;
-            min-width: clamp(150px, 40vw, 250px);
-            font-size: clamp(0.8rem, 2.5vw, 1rem);
-        }
-
-        #hud.hidden {
+            z-index: 50;
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
             display: none;
         }
 
+        #hud.active {
+            display: block;
+        }
+
         .hud-item {
-            margin: clamp(5px, 2vw, 10px) 0;
-            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+            background: rgba(0,0,0,0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            border: 2px solid #00ff00;
         }
 
-        .hud-label {
-            color: #4fc3f7;
-            font-weight: bold;
-            font-size: clamp(0.8rem, 2vw, 1rem);
+        #pauseMenu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 3px solid #00ff00;
+            display: none;
+            z-index: 200;
+            text-align: center;
         }
 
-        .hud-value {
-            color: #fff;
-            font-size: clamp(1.1rem, 3vw, 1.5rem);
-            font-weight: bold;
+        #pauseMenu.active {
+            display: block;
         }
 
-        #game-container {
+        #pauseMenu h2 {
+            color: #00ff00;
+            font-size: clamp(2rem, 8vw, 3rem);
+            margin-bottom: 2rem;
+        }
+
+        #gameOver {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 1;
-        }
-        
-        #game-container canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        #mobile-controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: clamp(8px, 2vw, 10px);
-            z-index: 100;
-        }
-
-        #mobile-controls.active {
-            display: flex;
-        }
-
-        .mobile-btn {
-            width: clamp(50px, 15vw, 70px);
-            height: clamp(50px, 15vw, 70px);
-            border-radius: 50%;
-            background: rgba(79, 195, 247, 0.8);
-            border: 3px solid white;
-            display: flex;
-            align-items: center;
+            background: rgba(0,0,0,0.95);
+            display: none;
             justify-content: center;
-            font-size: clamp(1.5rem, 5vw, 2rem);
-            cursor: pointer;
-            touch-action: none;
-            user-select: none;
+            align-items: center;
+            z-index: 300;
         }
 
-        .mobile-btn:active {
-            background: rgba(79, 195, 247, 1);
-            transform: scale(0.9);
+        #gameOver.active {
+            display: flex;
         }
 
-        canvas {
-            display: none;
-        }
-
-        .controls-hint {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            display: none;
-            z-index: 100;
-        }
-
-        .controls-hint.active {
-            display: block;
-            animation: fadeIn 0.5s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, 20px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
-        }
-
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            padding: 40px;
-            border-radius: 20px;
+        .game-over-content {
             text-align: center;
-            display: none;
-            z-index: 200;
+            padding: 2rem;
         }
 
-        #game-over.active {
-            display: block;
-            animation: popIn 0.5s;
+        .game-over-content h2 {
+            color: #00ff00;
+            font-size: clamp(2rem, 10vw, 4rem);
+            margin-bottom: 2rem;
+            animation: glow 1s infinite;
         }
 
-        @keyframes popIn {
-            from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        #game-over h2 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: #4fc3f7;
-        }
-
-        #game-over .stats {
-            font-size: 1.5rem;
-            margin: 10px 0;
+        .game-over-content .stats {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            margin-bottom: 2rem;
+            color: #00ff00;
         }
 
         @media (max-width: 768px) {
-            #controls {
-                font-size: 0.9rem;
-                padding: 15px;
-                max-width: 90%;
+            .menu-section {
+                padding: 1rem;
             }
             
-            button {
-                padding: 12px;
-                font-size: 1rem;
+            .track-buttons {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-
-    <div id="splash-screen">
-        <h1>🏎️ Desktop Racing Reimagined</h1>
-        <p>Turn Your Real Desktop into a Race Track!</p>
-        <div class="instructions">
-            <h3>🎮 How to Play:</h3>
-            <ul>
-                <li>📸 Point camera at your desk/table</li>
-                <li>🎯 Capture photo of objects (books, cups, etc.)</li>
-                <li>🏁 AI creates a race track from edges!</li>
-                <li>🚗 Drive: Arrow Keys / WASD</li>
-                <li>⚡ Complete laps as fast as possible</li>
-            </ul>
-        </div>
-        <button onclick="startSetup()" style="width: clamp(250px, 80%, 350px); padding: clamp(15px, 4vw, 20px); font-size: clamp(1.1rem, 4vw, 1.5rem); background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
-            🏁 Start Racing!
-        </button>
-    </div>
-
-    <div id="controls">
-        <h3>🏁 Setup Track</h3>
+    <div id="menu">
+        <h1>🏎️ DESKTOP RACING 🏎️</h1>
         
-        <div style="margin-bottom: 15px;">
-            <button id="preset-tracks-btn" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                🏁 Use Preset Tracks (No Camera)
-            </button>
-        </div>
-        
-        <div id="preset-tracks" style="display: none; margin: 10px 0;">
-            <h4 style="color: #4fc3f7; margin-bottom: 10px;">Select Track:</h4>
-            <button class="preset-track-btn" data-track="oval">🔴 Oval Circuit</button>
-            <button class="preset-track-btn" data-track="figure8">♾️ Figure-8</button>
-            <button class="preset-track-btn" data-track="complex">🌀 Complex Circuit</button>
-            <button class="preset-track-btn" data-track="zigzag">⚡ Zigzag Track</button>
-        </div>
-        
-        <div style="text-align: center; margin: 10px 0; color: #888; font-size: 0.9rem;">— OR —</div>
-        
-        <select id="camera-select" class="camera-select">
-            <option>Loading cameras...</option>
-        </select>
-
-        <div id="camera-container">
-            <video id="video-preview" autoplay playsinline></video>
+        <div class="menu-section">
+            <h2>SELECT TRACK</h2>
+            <div class="track-buttons">
+                <button onclick="startGame('desert')">🏜️ DESERT HIGHWAY</button>
+                <button onclick="startGame('city')">🏙️ CITY STREETS</button>
+                <button onclick="startGame('mountain')">⛰️ MOUNTAIN PASS</button>
+                <button onclick="startGame('night')">🌃 NIGHT CITY</button>
+            </div>
         </div>
 
-        <button id="snap">📸 1. Capture Desktop</button>
-        <button id="process" disabled>🔮 2. Generate Track</button>
-        <button id="start-race" disabled>🏁 3. Start Race!</button>
-        <button id="reset">🔄 Reset</button>
-        
-        <div id="status">Loading OpenCV.js...</div>
-    </div>
-
-    <div id="hud" class="hidden">
-        <div class="hud-item">
-            <span class="hud-label">⏱️ Time:</span>
-            <div class="hud-value" id="timer">0:00.0</div>
-        </div>
-        <div class="hud-item">
-            <span class="hud-label">🏁 Lap:</span>
-            <div class="hud-value" id="lap">1 / 3</div>
-        </div>
-        <div class="hud-item">
-            <span class="hud-label">⚡ Speed:</span>
-            <div class="hud-value" id="speed">0</div>
-        </div>
-        <div class="hud-item">
-            <span class="hud-label">⭐ Best Lap:</span>
-            <div class="hud-value" id="best-lap">--:--.-</div>
+        <div class="menu-section">
+            <p style="color: #00ff00; font-size: clamp(0.9rem, 3vw, 1.1rem);">
+                🎮 USE ARROW KEYS OR TOUCH TO STEER<br>
+                🏁 AVOID TRAFFIC AND REACH THE FINISH LINE<br>
+                ⏸️ PRESS ESC TO PAUSE
+            </p>
         </div>
     </div>
 
-    <button id="pause-btn">⏸️ PAUSE</button>
-
-    <div class="controls-hint">
-        🎮 Controls: ⬅️ ⬆️ ➡️ or WASD
+    <div id="hud">
+        <div class="hud-item">SPEED: <span id="speed">0</span> MPH</div>
+        <div class="hud-item">DISTANCE: <span id="distance">0</span> M</div>
+        <div class="hud-item">TIME: <span id="time">0:00</span></div>
     </div>
 
-    <div id="mobile-controls">
-        <div class="mobile-btn" id="btn-left">⬅️</div>
-        <div class="mobile-btn" id="btn-up">⬆️</div>
-        <div class="mobile-btn" id="btn-right">➡️</div>
+    <div id="pauseMenu">
+        <h2>⏸️ PAUSED</h2>
+        <button onclick="resumeGame()">RESUME</button>
+        <button onclick="quitToMenu()">QUIT TO MENU</button>
     </div>
 
-    <div id="game-over">
-        <h2>🏆 Race Complete!</h2>
-        <div class="stats">
-            <div>⏱️ Total Time: <span id="final-time">0:00.0</span></div>
-            <div>⚡ Best Lap: <span id="final-best">0:00.0</span></div>
-            <div>🏎️ Top Speed: <span id="final-speed">0</span></div>
+    <div id="gameOver">
+        <div class="game-over-content">
+            <h2>🏁 RACE COMPLETE!</h2>
+            <div class="stats">
+                <p>TIME: <span id="finalTime">0:00</span></p>
+                <p>TOP SPEED: <span id="finalSpeed">0</span> MPH</p>
+                <p>DISTANCE: <span id="finalDistance">0</span> M</p>
+            </div>
+            <button onclick="quitToMenu()">BACK TO MENU</button>
+            <button onclick="startGame(currentTrack)">RACE AGAIN</button>
         </div>
-        <button onclick="resetGame()" style="margin-top: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-            🔄 Race Again
-        </button>
     </div>
 
-    <video id="video" width="640" height="480" autoplay playsinline style="display: none;"></video>
-    <canvas id="canvasOutput" width="640" height="480" style="display: none;"></canvas>
-    <div id="game-container"></div>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        // ============================================
-        // GLOBAL VARIABLES & SETUP
-        // ============================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         
-        const video = document.getElementById('video');
-        const videoPreview = document.getElementById('video-preview');
-        const canvas = document.getElementById('canvasOutput');
-        const snapBtn = document.getElementById('snap');
-        const processBtn = document.getElementById('process');
-        const startRaceBtn = document.getElementById('start-race');
-        const resetBtn = document.getElementById('reset');
-        const status = document.getElementById('status');
-        const cameraSelect = document.getElementById('camera-select');
-
-        let car = null;
-        let carStartX = 0;
-        let carStartY = 0;
-        let gameActive = false;
+        // Game state
+        let gameRunning = false;
+        let gamePaused = false;
+        let currentTrack = 'desert';
+        let playerX = 0.5; // 0 to 1 (left to right)
+        let speed = 0;
+        let maxSpeed = 200;
+        let acceleration = 0.5;
+        let deceleration = 0.3;
+        let turnSpeed = 0.05;
+        let roadPosition = 0;
+        let distance = 0;
         let startTime = 0;
-        let lapStartTime = 0;
-        let currentLap = 1;
-        let bestLapTime = Infinity;
-        let checkpointsPassed = [];
-        let totalLaps = 3;
-        let cameras = [];
-        let audioContext = null;
-        let engineSound = null;
-        let isPaused = false;
-        let pauseOverlay = null;
+        let finishDistance = 5000;
         
-        // Physics engine setup
-        const { Engine, Render, Runner, Bodies, Composite, Body, Events, Vector } = Matter;
-        const engine = Engine.create();
-        engine.gravity.y = 0; // Top-down view, no gravity
+        // Road segments for 3D effect
+        let roadSegments = [];
+        const segmentLength = 200;
+        const roadWidth = 2000;
+        const cameraHeight = 1000;
+        const cameraDepth = 1 / Math.tan((90 / 2) * Math.PI / 180);
         
-        const render = Render.create({
-            element: document.getElementById('game-container'),
-            engine: engine,
-            options: {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                wireframes: false,
-                background: '#1a1a2e'
-            }
-        });
-
-        // ============================================
-        // AUDIO SYSTEM
-        // ============================================
+        // Cars
+        let cars = [];
         
-        function initAudio() {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            } catch (e) {
-                console.log('Audio not supported');
-            }
-        }
-
-        function playSound(frequency, duration = 0.1, type = 'sine') {
-            if (!audioContext) return;
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration);
-        }
-
-        function playEngineSound(speed) {
-            if (!audioContext || !gameActive) return;
-            const baseFreq = 50;
-            const freq = baseFreq + (speed * 2);
-            playSound(freq, 0.05, 'sawtooth');
-        }
-
-        function playCollisionSound() {
-            playSound(200, 0.2, 'square');
-        }
-
-        function playCheckpointSound() {
-            playSound(800, 0.1, 'sine');
-            setTimeout(() => playSound(1000, 0.1, 'sine'), 100);
-        }
-
-        // ============================================
-        // CAMERA SETUP
-        // ============================================
-        
-        let currentStream = null;
-        
-        async function setupCamera() {
-            try {
-                // Request initial permission to get camera labels
-                const initialStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                initialStream.getTracks().forEach(track => track.stop());
-                
-                // Now enumerate devices with labels available
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                cameras = devices.filter(device => device.kind === 'videoinput');
-                
-                status.innerHTML = `📹 Found ${cameras.length} camera${cameras.length !== 1 ? 's' : ''}. Select your camera below.`;
-                
-                cameraSelect.innerHTML = '';
-                cameras.forEach((camera, index) => {
-                    const option = document.createElement('option');
-                    option.value = camera.deviceId;
-                    option.text = camera.label || `Camera ${index + 1}`;
-                    cameraSelect.appendChild(option);
-                });
-
-                cameraSelect.addEventListener('change', switchCamera);
-                await switchCamera();
-                
-            } catch (err) {
-                console.error('Camera error:', err);
-                status.innerHTML = '❌ Camera access denied. Please enable camera permissions in your browser settings.';
-            }
-        }
-
-        async function switchCamera() {
-            const deviceId = cameraSelect.value;
-            
-            // Stop previous stream
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-            }
-            
-            try {
-                const constraints = {
-                    video: {
-                        deviceId: deviceId ? { exact: deviceId } : undefined,
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                };
-                
-                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                video.srcObject = currentStream;
-                videoPreview.srcObject = currentStream;
-                
-                const selectedCamera = cameras.find(c => c.deviceId === deviceId);
-                status.innerHTML = `✅ Using: ${selectedCamera?.label || 'Selected Camera'}. Frame your desktop and capture.`;
-                snapBtn.disabled = false;
-                
-            } catch (err) {
-                console.error('Stream error:', err);
-                status.innerHTML = '❌ Could not access selected camera. Try another one.';
-            }
-        }
-
-        function startSetup() {
-            document.getElementById('splash-screen').classList.add('hidden');
-            setupCamera();
-            initAudio();
-        }
-
-        // ============================================
-        // IMAGE CAPTURE & PROCESSING
-        // ============================================
-        
-        // Preset tracks toggle
-        document.getElementById('preset-tracks-btn').addEventListener('click', () => {
-            const presetDiv = document.getElementById('preset-tracks');
-            presetDiv.style.display = presetDiv.style.display === 'none' ? 'block' : 'none';
-        });
-        
-        // Preset track buttons
-        document.querySelectorAll('.preset-track-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const trackType = btn.dataset.track;
-                generatePresetTrack(trackType);
-                document.getElementById('preset-tracks').style.display = 'none';
-            });
-        });
-        
-        snapBtn.addEventListener('click', () => {
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, 640, 480);
-            status.innerHTML = '📸 Photo captured! Now click Generate Track.';
-            processBtn.disabled = false;
-            playCheckpointSound();
-        });
-
-        processBtn.addEventListener('click', generateTrack);
-
-        function generateTrack() {
-            status.innerHTML = '🔮 Analyzing desktop... Creating physics world...';
-            
-            // Clear existing world
-            Composite.clear(engine.world);
-            checkpointsPassed = [];
-            
-            try {
-                // Read image from canvas
-                let src = cv.imread(canvas);
-                let dst = new cv.Mat();
-                let contourImg = new cv.Mat();
-                
-                // Convert to gray & apply Canny edge detection
-                cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
-                cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
-                cv.Canny(src, dst, 30, 100, 3, false);
-                
-                // Dilate to make edges thicker/more connected
-                let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
-                cv.dilate(dst, dst, kernel);
-                
-                // Find contours
-                let contours = new cv.MatVector();
-                let hierarchy = new cv.Mat();
-                cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-
-                let trackBodies = 0;
-                const scaleX = window.innerWidth / 640;
-                const scaleY = window.innerHeight / 480;
-                
-                // Convert contours to physics bodies
-                for (let i = 0; i < contours.size(); i++) {
-                    let contour = contours.get(i);
-                    let area = cv.contourArea(contour);
-                    
-                    // Only use significant contours
-                    if (area < 500 || area > 100000) continue;
-                    
-                    let points = [];
-                    for (let j = 0; j < contour.data32S.length; j += 2) {
-                        points.push({
-                            x: contour.data32S[j] * scaleX,
-                            y: contour.data32S[j + 1] * scaleY
-                        });
-                    }
-                    
-                    // Simplify points
-                    if (points.length > 50) {
-                        const step = Math.floor(points.length / 30);
-                        points = points.filter((p, idx) => idx % step === 0);
-                    }
-                    
-                    if (points.length > 5) {
-                        try {
-                            const obstacle = Bodies.fromVertices(0, 0, [points], {
-                                isStatic: true,
-                                render: {
-                                    fillStyle: `hsl(${trackBodies * 30}, 70%, 50%)`,
-                                    strokeStyle: '#fff',
-                                    lineWidth: 2
-                                },
-                                friction: 0.8,
-                                restitution: 0.3
-                            }, true);
-                            
-                            if (obstacle) {
-                                Composite.add(engine.world, obstacle);
-                                trackBodies++;
-                            }
-                        } catch (e) {
-                            console.log('Skipped complex contour');
-                        }
-                    }
-                }
-                
-                // Add boundary walls
-                addBoundaryWalls();
-                
-                // Add start/finish line and checkpoints
-                addCheckpoints();
-                
-                // Add directional arrows for guidance
-                addDirectionalArrows();
-                
-                // Add car at start position
-                createCar();
-                
-                // Cleanup
-                src.delete();
-                dst.delete();
-                contours.delete();
-                hierarchy.delete();
-                kernel.delete();
-                
-                status.innerHTML = `✅ Track generated with ${trackBodies} obstacles! Ready to race!`;
-                startRaceBtn.disabled = false;
-                playCheckpointSound();
-                
-            } catch (error) {
-                console.error('Track generation error:', error);
-                status.innerHTML = '❌ Error generating track. Try capturing again with better lighting.';
-            }
-        }
-        
-        // ============================================
-        // PRESET TRACK GENERATION
-        // ============================================
-        
-        function generatePresetTrack(trackType) {
-            status.innerHTML = `🏁 Generating ${trackType} track...`;
-            
-            // Clear existing world
-            Composite.clear(engine.world);
-            checkpointsPassed = [];
-            
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            
-            switch(trackType) {
-                case 'oval':
-                    createOvalTrack(w, h);
-                    break;
-                case 'figure8':
-                    createFigure8Track(w, h);
-                    break;
-                case 'complex':
-                    createComplexTrack(w, h);
-                    break;
-                case 'zigzag':
-                    createZigzagTrack(w, h);
-                    break;
-            }
-            
-            addBoundaryWalls();
-            addCheckpoints();
-            addDirectionalArrows();
-            createCar();
-            
-            status.innerHTML = `✅ ${trackType.charAt(0).toUpperCase() + trackType.slice(1)} track generated! Ready to race!`;
-            startRaceBtn.disabled = false;
-            playCheckpointSound();
-        }
-        
-        function createOvalTrack(w, h) {
-            // Create grass/dirt texture for track walls
-            const wallTexture = 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <pattern id="grassPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                            <rect width="20" height="20" fill="#2d5016"/>
-                            <circle cx="5" cy="5" r="1" fill="#3a6b1f"/>
-                            <circle cx="15" cy="8" r="1" fill="#3a6b1f"/>
-                            <circle cx="8" cy="15" r="1" fill="#3a6b1f"/>
-                            <circle cx="18" cy="18" r="1" fill="#3a6b1f"/>
-                        </pattern>
-                    </defs>
-                    <rect width="100" height="100" fill="url(#grassPattern)"/>
-                    <rect x="0" y="0" width="100" height="100" fill="#2d5016" opacity="0.3"/>
-                </svg>
-            `);
-            
-            // Outer oval barrier
-            const outerPoints = [];
-            for (let i = 0; i <= 40; i++) {
-                const angle = (i / 40) * Math.PI * 2;
-                const x = w/2 + Math.cos(angle) * (w * 0.35);
-                const y = h/2 + Math.sin(angle) * (h * 0.35);
-                outerPoints.push({ x, y });
-            }
-            const outerWall = Bodies.fromVertices(w/2, h/2, [outerPoints], {
-                isStatic: true,
-                render: { sprite: { texture: wallTexture, xScale: 6, yScale: 6 } }
-            });
-            
-            // Inner oval
-            const innerPoints = [];
-            for (let i = 0; i <= 40; i++) {
-                const angle = (i / 40) * Math.PI * 2;
-                const x = w/2 + Math.cos(angle) * (w * 0.2);
-                const y = h/2 + Math.sin(angle) * (h * 0.2);
-                innerPoints.push({ x, y });
-            }
-            const innerWall = Bodies.fromVertices(w/2, h/2, [innerPoints], {
-                isStatic: true,
-                render: { sprite: { texture: wallTexture, xScale: 4, yScale: 4 } }
-            });
-            
-            Composite.add(engine.world, [outerWall, innerWall]);
-        }
-        
-        function createFigure8Track(w, h) {
-            // Create wall texture
-            const wallTexture = 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <pattern id="grassPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                            <rect width="20" height="20" fill="#2d5016"/>
-                            <circle cx="5" cy="5" r="1" fill="#3a6b1f"/>
-                            <circle cx="15" cy="8" r="1" fill="#3a6b1f"/>
-                            <circle cx="8" cy="15" r="1" fill="#3a6b1f"/>
-                            <circle cx="18" cy="18" r="1" fill="#3a6b1f"/>
-                        </pattern>
-                    </defs>
-                    <rect width="100" height="100" fill="url(#grassPattern)"/>
-                    <rect x="0" y="0" width="100" height="100" fill="#2d5016" opacity="0.3"/>
-                </svg>
-            `);
-            
-            // Left loop
-            const leftLoop = [];
-            for (let i = 0; i <= 20; i++) {
-                const angle = (i / 20) * Math.PI * 2;
-                const x = w * 0.35 + Math.cos(angle) * (w * 0.15);
-                const y = h/2 + Math.sin(angle) * (h * 0.25);
-                leftLoop.push({ x, y });
-            }
-            
-            // Right loop
-            const rightLoop = [];
-            for (let i = 0; i <= 20; i++) {
-                const angle = (i / 20) * Math.PI * 2;
-                const x = w * 0.65 + Math.cos(angle) * (w * 0.15);
-                const y = h/2 + Math.sin(angle) * (h * 0.25);
-                rightLoop.push({ x, y });
-            }
-            
-            const leftObstacle = Bodies.fromVertices(w * 0.35, h/2, [leftLoop], {
-                isStatic: true,
-                render: { sprite: { texture: wallTexture, xScale: 4, yScale: 4 } }
-            });
-            
-            const rightObstacle = Bodies.fromVertices(w * 0.65, h/2, [rightLoop], {
-                isStatic: true,
-                render: { sprite: { texture: wallTexture, xScale: 4, yScale: 4 } }
-            });
-            
-            Composite.add(engine.world, [leftObstacle, rightObstacle]);
-        }
-        
-        function createComplexTrack(w, h) {
-            // Create rock/barrier texture
-            const rockTexture = 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <radialGradient id="rockGrad">
-                            <stop offset="0%" style="stop-color:#888;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#444;stop-opacity:1" />
-                        </radialGradient>
-                    </defs>
-                    <polygon points="50,10 90,40 80,85 20,85 10,40" fill="url(#rockGrad)" stroke="#333" stroke-width="3"/>
-                    <circle cx="35" cy="45" r="8" fill="#555" opacity="0.5"/>
-                    <circle cx="60" cy="50" r="6" fill="#666" opacity="0.5"/>
-                </svg>
-            `);
-            
-            // Create random obstacles
-            const obstacles = [];
-            
-            // S-curve barriers
-            for (let i = 0; i < 3; i++) {
-                const x = w * (0.25 + i * 0.25);
-                const y = h * 0.3 + Math.sin(i) * h * 0.2;
-                const rect = Bodies.rectangle(x, y, w * 0.15, h * 0.08, {
-                    isStatic: true,
-                    angle: i * 0.3,
-                    render: { 
-                        sprite: { texture: rockTexture, xScale: (w * 0.15) / 100, yScale: (h * 0.08) / 100 }
-                    }
-                });
-                obstacles.push(rect);
-            }
-            
-            // Bottom barriers (circular rocks)
-            for (let i = 0; i < 2; i++) {
-                const x = w * (0.35 + i * 0.3);
-                const y = h * 0.7;
-                const circle = Bodies.circle(x, y, w * 0.08, {
-                    isStatic: true,
-                    render: { 
-                        sprite: { texture: rockTexture, xScale: (w * 0.16) / 100, yScale: (w * 0.16) / 100 }
-                    }
-                });
-                obstacles.push(circle);
-            }
-            
-            Composite.add(engine.world, obstacles);
-        }
-        
-        function createZigzagTrack(w, h) {
-            // Create barrier texture (traffic cones/barriers)
-            const barrierTexture = 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="100" height="50" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="coneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#ff6b00;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#cc4400;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect x="10" y="5" width="80" height="40" rx="5" fill="url(#coneGrad)" stroke="#fff" stroke-width="3"/>
-                    <rect x="20" y="15" width="60" height="8" fill="#fff" opacity="0.8"/>
-                    <rect x="20" y="30" width="60" height="8" fill="#fff" opacity="0.8"/>
-                </svg>
-            `);
-            
-            const obstacles = [];
-            
-            // Create zigzag pattern
-            for (let i = 0; i < 5; i++) {
-                const y = h * (0.2 + i * 0.15);
-                const x = (i % 2 === 0) ? w * 0.3 : w * 0.7;
-                
-                const barrier = Bodies.rectangle(x, y, w * 0.25, h * 0.05, {
-                    isStatic: true,
-                    render: { 
-                        sprite: { texture: barrierTexture, xScale: (w * 0.25) / 100, yScale: (h * 0.05) / 50 }
-                    }
-                });
-                obstacles.push(barrier);
-            }
-            
-            Composite.add(engine.world, obstacles);
-        }
-
-        function addBoundaryWalls() {
-            const thickness = 50;
-            const barrierTexture = 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="50" height="50" xmlns="http://www.w3.org/2000/svg">
-                    <pattern id="tirePattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                        <circle cx="25" cy="25" r="20" fill="#333" stroke="#666" stroke-width="3"/>
-                        <circle cx="25" cy="25" r="12" fill="#222" stroke="#555" stroke-width="2"/>
-                    </pattern>
-                    <rect width="50" height="50" fill="url(#tirePattern)"/>
-                </svg>
-            `);
-            
-            const walls = [
-                Bodies.rectangle(window.innerWidth / 2, -thickness / 2, window.innerWidth, thickness, {
-                    isStatic: true,
-                    render: { 
-                        sprite: { texture: barrierTexture, xScale: window.innerWidth / 50, yScale: 1 }
-                    }
-                }),
-                Bodies.rectangle(window.innerWidth / 2, window.innerHeight + thickness / 2, window.innerWidth, thickness, {
-                    isStatic: true,
-                    render: { 
-                        sprite: { texture: barrierTexture, xScale: window.innerWidth / 50, yScale: 1 }
-                    }
-                }),
-                Bodies.rectangle(-thickness / 2, window.innerHeight / 2, thickness, window.innerHeight, {
-                    isStatic: true,
-                    render: { 
-                        sprite: { texture: barrierTexture, xScale: 1, yScale: window.innerHeight / 50 }
-                    }
-                }),
-                Bodies.rectangle(window.innerWidth + thickness / 2, window.innerHeight / 2, thickness, window.innerHeight, {
-                    isStatic: true,
-                    render: { 
-                        sprite: { texture: barrierTexture, xScale: 1, yScale: window.innerHeight / 50 }
-                    }
-                })
-            ];
-            
-            Composite.add(engine.world, walls);
-        }
-
-        function addCheckpoints() {
-            const startLine = Bodies.rectangle(100, window.innerHeight / 2, 10, 100, {
-                isStatic: true,
-                isSensor: true,
-                render: { fillStyle: '#00ff00', opacity: 0.5 },
-                label: 'checkpoint-start'
-            });
-            
-            const checkpoint1 = Bodies.rectangle(window.innerWidth / 2, 100, 100, 10, {
-                isStatic: true,
-                isSensor: true,
-                render: { fillStyle: '#ffff00', opacity: 0.5 },
-                label: 'checkpoint-1'
-            });
-            
-            const checkpoint2 = Bodies.rectangle(window.innerWidth - 100, window.innerHeight / 2, 10, 100, {
-                isStatic: true,
-                isSensor: true,
-                render: { fillStyle: '#ff00ff', opacity: 0.5 },
-                label: 'checkpoint-2'
-            });
-            
-            Composite.add(engine.world, [startLine, checkpoint1, checkpoint2]);
-        }
-
-        // ============================================
-        // DIRECTIONAL MARKERS (Visual Track Guidance)
-        // ============================================
-        
-        function addDirectionalArrows() {
-            // Create arrow shape pointing right
-            const arrowSize = 30;
-            const arrowVertices = [
-                { x: -arrowSize, y: -arrowSize/2 },
-                { x: 0, y: -arrowSize/2 },
-                { x: 0, y: -arrowSize },
-                { x: arrowSize, y: 0 },
-                { x: 0, y: arrowSize },
-                { x: 0, y: arrowSize/2 },
-                { x: -arrowSize, y: arrowSize/2 }
-            ];
-            
-            const arrows = [];
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            
-            // Place arrows along the track to guide players
-            // Bottom section - pointing right
-            for (let i = 200; i < width - 200; i += 150) {
-                const arrow = Bodies.fromVertices(i, height - 150, [arrowVertices], {
-                    isStatic: true,
-                    isSensor: true,
-                    render: {
-                        fillStyle: '#4fc3f7',
-                        strokeStyle: '#00ffff',
-                        lineWidth: 2,
-                        opacity: 0.6
-                    },
-                    label: 'arrow-guide'
-                });
-                if (arrow) arrows.push(arrow);
-            }
-            
-            // Right side - pointing up
-            const upArrowVertices = [
-                { x: -arrowSize/2, y: arrowSize },
-                { x: -arrowSize/2, y: 0 },
-                { x: -arrowSize, y: 0 },
-                { x: 0, y: -arrowSize },
-                { x: arrowSize, y: 0 },
-                { x: arrowSize/2, y: 0 },
-                { x: arrowSize/2, y: arrowSize }
-            ];
-            for (let i = height - 200; i > 200; i -= 150) {
-                const arrow = Bodies.fromVertices(width - 150, i, [upArrowVertices], {
-                    isStatic: true,
-                    isSensor: true,
-                    render: {
-                        fillStyle: '#4fc3f7',
-                        strokeStyle: '#00ffff',
-                        lineWidth: 2,
-                        opacity: 0.6
-                    },
-                    label: 'arrow-guide'
-                });
-                if (arrow) arrows.push(arrow);
-            }
-            
-            // Top section - pointing left
-            const leftArrowVertices = [
-                { x: arrowSize, y: -arrowSize/2 },
-                { x: 0, y: -arrowSize/2 },
-                { x: 0, y: -arrowSize },
-                { x: -arrowSize, y: 0 },
-                { x: 0, y: arrowSize },
-                { x: 0, y: arrowSize/2 },
-                { x: arrowSize, y: arrowSize/2 }
-            ];
-            for (let i = width - 200; i > 200; i -= 150) {
-                const arrow = Bodies.fromVertices(i, 150, [leftArrowVertices], {
-                    isStatic: true,
-                    isSensor: true,
-                    render: {
-                        fillStyle: '#4fc3f7',
-                        strokeStyle: '#00ffff',
-                        lineWidth: 2,
-                        opacity: 0.6
-                    },
-                    label: 'arrow-guide'
-                });
-                if (arrow) arrows.push(arrow);
-            }
-            
-            // Left side - pointing down
-            const downArrowVertices = [
-                { x: -arrowSize/2, y: -arrowSize },
-                { x: -arrowSize/2, y: 0 },
-                { x: -arrowSize, y: 0 },
-                { x: 0, y: arrowSize },
-                { x: arrowSize, y: 0 },
-                { x: arrowSize/2, y: 0 },
-                { x: arrowSize/2, y: -arrowSize }
-            ];
-            for (let i = 200; i < height - 200; i += 150) {
-                const arrow = Bodies.fromVertices(150, i, [downArrowVertices], {
-                    isStatic: true,
-                    isSensor: true,
-                    render: {
-                        fillStyle: '#4fc3f7',
-                        strokeStyle: '#00ffff',
-                        lineWidth: 2,
-                        opacity: 0.6
-                    },
-                    label: 'arrow-guide'
-                });
-                if (arrow) arrows.push(arrow);
-            }
-            
-            // Add all arrows to the world
-            if (arrows.length > 0) {
-                Composite.add(engine.world, arrows);
-            }
-        }
-
-        // ============================================
-        // CAR CREATION & PHYSICS
-        // ============================================
-        
-        function createCar() {
-            carStartX = 150;
-            carStartY = window.innerHeight / 2;
-            
-            // Create race car sprite (top-down view)
-            const carSprite = 'data:image/svg+xml;base64,' + btoa(`
-                <svg width="60" height="40" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Car body -->
-                    <defs>
-                        <linearGradient id="carGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" style="stop-color:#ff4444;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#cc0000;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <ellipse cx="30" cy="20" rx="28" ry="18" fill="url(#carGrad)" stroke="#fff" stroke-width="2"/>
-                    <!-- Front bumper -->
-                    <rect x="50" y="15" width="8" height="10" rx="3" fill="#666" stroke="#fff" stroke-width="1"/>
-                    <!-- Rear spoiler -->
-                    <rect x="2" y="12" width="6" height="16" rx="2" fill="#333" stroke="#fff" stroke-width="1"/>
-                    <!-- Side mirrors -->
-                    <circle cx="15" cy="5" r="3" fill="#4fc3f7" stroke="#fff" stroke-width="1"/>
-                    <circle cx="15" cy="35" r="3" fill="#4fc3f7" stroke="#fff" stroke-width="1"/>
-                    <!-- Racing stripes -->
-                    <rect x="20" y="8" width="4" height="24" fill="#fff" opacity="0.8"/>
-                    <rect x="36" y="8" width="4" height="24" fill="#fff" opacity="0.8"/>
-                </svg>
-            `);
-            
-            const carBody = Bodies.rectangle(carStartX, carStartY, 60, 40, {
-                render: {
-                    sprite: {
-                        texture: carSprite,
-                        xScale: 1,
-                        yScale: 1
-                    }
-                },
-                friction: 0.1,
-                frictionAir: 0.05,
-                restitution: 0.3,
-                density: 0.002,
-                label: 'car'
-            });
-            
-            car = carBody;
-            Composite.add(engine.world, car);
-        }
-
-        // ============================================
-        // CONTROLS
-        // ============================================
-        
+        // Controls
         const keys = {};
+        let touchX = null;
         
-        window.addEventListener('keydown', (e) => {
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Track configurations
+        const tracks = {
+            desert: {
+                name: 'Desert Highway',
+                skyColor: '#FFB347',
+                groundColor: '#DEB887',
+                roadColor: '#333',
+                roadLineColor: '#FFD700',
+                grassColor: '#C19A6B',
+                horizonColor: '#FF8C00'
+            },
+            city: {
+                name: 'City Streets',
+                skyColor: '#87CEEB',
+                groundColor: '#708090',
+                roadColor: '#2F4F4F',
+                roadLineColor: '#FFF',
+                grassColor: '#696969',
+                horizonColor: '#4682B4'
+            },
+            mountain: {
+                name: 'Mountain Pass',
+                skyColor: '#B0E0E6',
+                groundColor: '#8FBC8F',
+                roadColor: '#36454F',
+                roadLineColor: '#FFFF00',
+                grassColor: '#228B22',
+                horizonColor: '#5F9EA0'
+            },
+            night: {
+                name: 'Night City',
+                skyColor: '#0A0A2E',
+                groundColor: '#1A1A3E',
+                roadColor: '#000',
+                roadLineColor: '#FFA500',
+                grassColor: '#0F0F1E',
+                horizonColor: '#1A1A4E'
+            }
+        };
+        
+        // Initialize road
+        function initRoad() {
+            roadSegments = [];
+            for (let i = 0; i < 500; i++) {
+                const curve = Math.sin(i / 20) * 0.3;
+                const hill = Math.sin(i / 30) * 500;
+                roadSegments.push({
+                    index: i,
+                    curve: curve,
+                    y: hill
+                });
+            }
+        }
+        
+        // Initialize traffic cars
+        function initCars() {
+            cars = [];
+            for (let i = 0; i < 20; i++) {
+                cars.push({
+                    segment: Math.floor(Math.random() * 300) + 50,
+                    x: Math.random() * 0.6 + 0.2, // Keep cars on road
+                    speed: Math.random() * 50 + 80,
+                    color: ['#ff0000', '#0000ff', '#ffff00', '#00ff00', '#ff00ff'][Math.floor(Math.random() * 5)]
+                });
+            }
+        }
+        
+        // Start game
+        function startGame(track) {
+            currentTrack = track;
+            gameRunning = true;
+            gamePaused = false;
+            playerX = 0.5;
+            speed = 0;
+            distance = 0;
+            startTime = Date.now();
+            
+            document.getElementById('menu').classList.add('hidden');
+            document.getElementById('hud').classList.add('active');
+            document.getElementById('gameOver').classList.remove('active');
+            
+            initRoad();
+            initCars();
+            gameLoop();
+        }
+        
+        // Pause/Resume
+        function pauseGame() {
+            if (!gameRunning || gamePaused) return;
+            gamePaused = true;
+            document.getElementById('pauseMenu').classList.add('active');
+        }
+        
+        function resumeGame() {
+            gamePaused = false;
+            document.getElementById('pauseMenu').classList.remove('active');
+            gameLoop();
+        }
+        
+        function quitToMenu() {
+            gameRunning = false;
+            gamePaused = false;
+            document.getElementById('menu').classList.remove('hidden');
+            document.getElementById('hud').classList.remove('active');
+            document.getElementById('pauseMenu').classList.remove('active');
+            document.getElementById('gameOver').classList.remove('active');
+        }
+        
+        // Game over
+        function endRace() {
+            gameRunning = false;
+            const finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+            document.getElementById('finalTime').textContent = formatTime(finalTime);
+            document.getElementById('finalSpeed').textContent = Math.floor(speed);
+            document.getElementById('finalDistance').textContent = Math.floor(distance);
+            document.getElementById('gameOver').classList.add('active');
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = (seconds % 60).toFixed(0).padStart(2, '0');
+            return `${mins}:${secs}`;
+        }
+        
+        // Controls
+        window.addEventListener('keydown', e => {
             keys[e.key] = true;
-            if (gameActive && audioContext) {
-                audioContext.resume();
+            if (e.key === 'Escape') {
+                if (gamePaused) resumeGame();
+                else if (gameRunning) pauseGame();
             }
         });
         
-        window.addEventListener('keyup', (e) => {
+        window.addEventListener('keyup', e => {
             keys[e.key] = false;
         });
-
-        // Mobile controls
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        if (isMobile) {
-            ['btn-left', 'btn-right', 'btn-up'].forEach(id => {
-                const btn = document.getElementById(id);
-                btn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    if (id === 'btn-left') keys['ArrowLeft'] = true;
-                    if (id === 'btn-right') keys['ArrowRight'] = true;
-                    if (id === 'btn-up') keys['ArrowUp'] = true;
-                });
-                btn.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    if (id === 'btn-left') keys['ArrowLeft'] = false;
-                    if (id === 'btn-right') keys['ArrowRight'] = false;
-                    if (id === 'btn-up') keys['ArrowUp'] = false;
-                });
+        canvas.addEventListener('touchstart', e => {
+            e.preventDefault();
+            touchX = e.touches[0].clientX;
+        });
+        
+        canvas.addEventListener('touchmove', e => {
+            e.preventDefault();
+            touchX = e.touches[0].clientX;
+        });
+        
+        canvas.addEventListener('touchend', () => {
+            touchX = null;
+        });
+        
+        // Update game
+        function update(dt) {
+            if (!gameRunning || gamePaused) return;
+            
+            // Acceleration
+            if (keys['ArrowUp'] || keys['w'] || touchX !== null) {
+                speed = Math.min(speed + acceleration * dt, maxSpeed);
+            } else {
+                speed = Math.max(speed - deceleration * dt, 0);
+            }
+            
+            // Steering
+            const currentSegment = roadSegments[Math.floor(distance / segmentLength) % roadSegments.length];
+            const baseCurve = currentSegment ? currentSegment.curve * 0.05 : 0;
+            
+            if (keys['ArrowLeft'] || keys['a']) {
+                playerX -= turnSpeed * dt * (1 + Math.abs(baseCurve));
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                playerX += turnSpeed * dt * (1 + Math.abs(baseCurve));
+            }
+            
+            // Touch steering
+            if (touchX !== null) {
+                const targetX = touchX / canvas.width;
+                const diff = targetX - playerX;
+                playerX += diff * turnSpeed * dt * 2;
+            }
+            
+            // Apply curve to player position
+            playerX += baseCurve * dt;
+            
+            // Keep player on road
+            playerX = Math.max(0.15, Math.min(0.85, playerX));
+            
+            // Move forward
+            distance += speed * dt;
+            
+            // Update traffic
+            cars.forEach(car => {
+                car.segment -= speed * dt / segmentLength;
+                if (car.segment < -10) {
+                    car.segment = Math.random() * 50 + 300;
+                    car.x = Math.random() * 0.6 + 0.2;
+                    car.speed = Math.random() * 50 + 80;
+                }
+                
+                // Simple collision detection
+                const carDistance = car.segment * segmentLength;
+                const distDiff = Math.abs(distance - carDistance);
+                if (distDiff < 200 && Math.abs(playerX - car.x) < 0.15) {
+                    speed *= 0.5; // Slow down on collision
+                }
             });
-        }
-
-        function updateCar() {
-            if (!car || !gameActive) return;
             
-            const force = 0.001;
-            const turnForce = 0.00008;
-            const maxSpeed = 10;
-            
-            // Get car velocity
-            const velocity = car.velocity;
-            const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
-            
-            // Forward/Backward (W/S or Up/Down)
-            if (keys['ArrowUp'] || keys['w'] || keys['W']) {
-                const angle = car.angle;
-                Body.applyForce(car, car.position, {
-                    x: Math.cos(angle) * force,
-                    y: Math.sin(angle) * force
-                });
-                if (speed < 8) playEngineSound(speed);
-            }
-            
-            if (keys['ArrowDown'] || keys['s'] || keys['S']) {
-                const angle = car.angle;
-                Body.applyForce(car, car.position, {
-                    x: -Math.cos(angle) * force * 0.5,
-                    y: -Math.sin(angle) * force * 0.5
-                });
-            }
-            
-            // Turning (A/D or Left/Right)
-            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
-                Body.setAngularVelocity(car, -0.1);
-            }
-            
-            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
-                Body.setAngularVelocity(car, 0.1);
-            }
-            
-            // Speed limit
-            if (speed > maxSpeed) {
-                Body.setVelocity(car, {
-                    x: velocity.x * (maxSpeed / speed),
-                    y: velocity.y * (maxSpeed / speed)
-                });
+            // Check finish
+            if (distance >= finishDistance) {
+                endRace();
             }
             
             // Update HUD
-            document.getElementById('speed').textContent = Math.round(speed * 10);
-            
-            // Camera follow
-            const camX = car.position.x - window.innerWidth / 2;
-            const camY = car.position.y - window.innerHeight / 2;
-            
-            Render.lookAt(render, {
-                min: { x: camX, y: camY },
-                max: { x: camX + window.innerWidth, y: camY + window.innerHeight }
-            });
+            document.getElementById('speed').textContent = Math.floor(speed);
+            document.getElementById('distance').textContent = Math.floor(distance);
+            document.getElementById('time').textContent = formatTime((Date.now() - startTime) / 1000);
         }
-
-        // ============================================
-        // COLLISION & CHECKPOINT DETECTION
-        // ============================================
         
-        Events.on(engine, 'collisionStart', (event) => {
-            event.pairs.forEach(pair => {
-                const { bodyA, bodyB } = pair;
+        // Render game
+        function render() {
+            const track = tracks[currentTrack];
+            
+            // Sky
+            ctx.fillStyle = track.skyColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            
+            // Ground
+            ctx.fillStyle = track.groundColor;
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            
+            // Horizon
+            ctx.fillStyle = track.horizonColor;
+            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
+            
+            // Road segments
+            const baseSegment = Math.floor(distance / segmentLength);
+            const basePercent = (distance % segmentLength) / segmentLength;
+            
+            // Render from far to near
+            for (let n = 300; n > 0; n--) {
+                const segment = roadSegments[(baseSegment + n) % roadSegments.length];
+                if (!segment) continue;
                 
-                // Check for checkpoint collisions
-                if ((bodyA.label === 'car' && bodyB.label && bodyB.label.startsWith('checkpoint')) ||
-                    (bodyB.label === 'car' && bodyA.label && bodyA.label.startsWith('checkpoint'))) {
-                    
-                    const checkpoint = bodyA.label?.startsWith('checkpoint') ? bodyA.label : bodyB.label;
-                    handleCheckpoint(checkpoint);
+                // 3D projection
+                const camera_x = playerX * roadWidth - roadWidth / 2;
+                const camera_y = cameraHeight;
+                const camera_z = distance - (n * segmentLength);
+                
+                const seg_z = (n - basePercent) * segmentLength;
+                
+                // Project segment
+                const scale = cameraDepth / (seg_z + 0.1);
+                const projectedWidth = scale * roadWidth * canvas.width / 1000;
+                const projectedCenterX = canvas.width / 2 + (scale * segment.curve * roadWidth * 3);
+                const projectedY = canvas.height / 2 + (scale * (segment.y - cameraHeight) * 0.5);
+                
+                if (projectedY < 0 || projectedY > canvas.height) continue;
+                
+                // Road
+                ctx.fillStyle = track.roadColor;
+                ctx.fillRect(
+                    projectedCenterX - projectedWidth / 2,
+                    projectedY,
+                    projectedWidth,
+                    canvas.height - projectedY
+                );
+                
+                // Grass/sides
+                ctx.fillStyle = track.grassColor;
+                ctx.fillRect(0, projectedY, projectedCenterX - projectedWidth / 2, canvas.height - projectedY);
+                ctx.fillRect(projectedCenterX + projectedWidth / 2, projectedY, canvas.width, canvas.height - projectedY);
+                
+                // Road lines
+                if (n % 5 === 0 && projectedWidth > 50) {
+                    ctx.fillStyle = track.roadLineColor;
+                    const lineWidth = Math.max(2, projectedWidth * 0.02);
+                    ctx.fillRect(
+                        projectedCenterX - lineWidth / 2,
+                        projectedY,
+                        lineWidth,
+                        Math.max(2, scale * 50)
+                    );
                 }
                 
-                // Play collision sound for obstacles
-                if ((bodyA.label === 'car' || bodyB.label === 'car') && gameActive) {
-                    if (!bodyA.isSensor && !bodyB.isSensor) {
-                        playCollisionSound();
+                // Draw cars at this segment
+                cars.forEach(car => {
+                    if (Math.floor(car.segment) === n) {
+                        const carProjectedX = projectedCenterX + (car.x - 0.5) * projectedWidth;
+                        const carWidth = Math.max(20, projectedWidth * 0.1);
+                        const carHeight = Math.max(30, carWidth * 1.5);
+                        
+                        // Car body
+                        ctx.fillStyle = car.color;
+                        ctx.fillRect(
+                            carProjectedX - carWidth / 2,
+                            projectedY - carHeight,
+                            carWidth,
+                            carHeight
+                        );
+                        
+                        // Car windows
+                        ctx.fillStyle = '#87CEEB';
+                        ctx.fillRect(
+                            carProjectedX - carWidth / 3,
+                            projectedY - carHeight * 0.7,
+                            carWidth * 0.66,
+                            carHeight * 0.4
+                        );
+                    }
+                });
+            }
+            
+            // Draw player car
+            const carWidth = 80;
+            const carHeight = 120;
+            const carX = canvas.width / 2;
+            const carY = canvas.height - carHeight - 50;
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(carX - carWidth / 2 + 5, carY + carHeight - 10, carWidth, 10);
+            
+            // Car body
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(carX - carWidth / 2, carY, carWidth, carHeight);
+            
+            // Car details
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(carX - carWidth / 3, carY + 20, carWidth * 0.66, carHeight * 0.3);
+            
+            // Racing stripes
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(carX - 10, carY, 4, carHeight);
+            ctx.fillRect(carX + 6, carY, 4, carHeight);
+            
+            // Finish line
+            if (distance > finishDistance - 1000) {
+                const finishDist = finishDistance - distance;
+                if (finishDist > 0) {
+                    const finishN = finishDist / segmentLength;
+                    const finishScale = cameraDepth / (finishN * segmentLength + 0.1);
+                    const finishY = canvas.height / 2;
+                    
+                    if (finishY > 0 && finishY < canvas.height) {
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 40px Courier New';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('FINISH', canvas.width / 2, finishY);
                     }
                 }
-            });
-        });
-
-        function handleCheckpoint(checkpoint) {
-            if (!gameActive) return;
-            
-            if (checkpoint === 'checkpoint-start') {
-                if (checkpointsPassed.includes('checkpoint-1') && checkpointsPassed.includes('checkpoint-2')) {
-                    // Complete lap
-                    completeLap();
-                    checkpointsPassed = [];
-                }
-            } else if (!checkpointsPassed.includes(checkpoint)) {
-                checkpointsPassed.push(checkpoint);
-                playCheckpointSound();
-                status.innerHTML = `✅ Checkpoint ${checkpointsPassed.length}/2 passed!`;
             }
         }
-
-        function completeLap() {
-            const lapTime = Date.now() - lapStartTime;
-            const lapSeconds = (lapTime / 1000).toFixed(1);
-            
-            if (lapTime < bestLapTime) {
-                bestLapTime = lapTime;
-                document.getElementById('best-lap').textContent = formatTime(bestLapTime);
-            }
-            
-            playCheckpointSound();
-            setTimeout(() => playCheckpointSound(), 150);
-            
-            currentLap++;
-            document.getElementById('lap').textContent = `${currentLap} / ${totalLaps}`;
-            
-            if (currentLap > totalLaps) {
-                endRace();
-            } else {
-                status.innerHTML = `🏁 Lap ${currentLap - 1} complete! Time: ${lapSeconds}s`;
-                lapStartTime = Date.now();
-            }
-        }
-
-        // ============================================
-        // RACE MANAGEMENT
-        // ============================================
         
-        startRaceBtn.addEventListener('click', startRace);
-
-        function startRace() {
-            gameActive = true;
-            isPaused = false;
-            startTime = Date.now();
-            lapStartTime = Date.now();
-            currentLap = 1;
-            bestLapTime = Infinity;
-            checkpointsPassed = [];
+        // Game loop
+        let lastTime = Date.now();
+        function gameLoop() {
+            if (!gameRunning || gamePaused) return;
             
-            document.getElementById('controls').style.display = 'none';
-            document.getElementById('camera-container').style.display = 'none';
-            document.getElementById('hud').classList.remove('hidden');
-            document.querySelector('.controls-hint').classList.add('active');
-            document.getElementById('pause-btn').classList.add('active');
+            const now = Date.now();
+            const dt = Math.min((now - lastTime) / 1000, 0.1); // Delta time in seconds
+            lastTime = now;
             
-            if (isMobile) {
-                document.getElementById('mobile-controls').classList.add('active');
-            }
+            update(dt);
+            render();
             
-            setTimeout(() => {
-                document.querySelector('.controls-hint').classList.remove('active');
-            }, 5000);
-            
-            status.innerHTML = '🏁 Race started! Complete 3 laps!';
-            playCheckpointSound();
+            requestAnimationFrame(gameLoop);
         }
-
-        function endRace() {
-            gameActive = false;
-            isPaused = false;
-            const totalTime = Date.now() - startTime;
-            const maxSpeed = document.getElementById('speed').textContent;
-            
-            document.getElementById('final-time').textContent = formatTime(totalTime);
-            document.getElementById('final-best').textContent = formatTime(bestLapTime);
-            document.getElementById('final-speed').textContent = maxSpeed;
-            document.getElementById('game-over').classList.add('active');
-            document.getElementById('pause-btn').classList.remove('active');
-            
-            // Hide pause overlay if visible
-            if (pauseOverlay) {
-                pauseOverlay.style.display = 'none';
-            }
-            
-            playCheckpointSound();
-            setTimeout(() => playCheckpointSound(), 100);
-            setTimeout(() => playCheckpointSound(), 200);
-        }
-
-        resetBtn.addEventListener('click', resetGame);
-
-        function resetGame() {
-            gameActive = false;
-            isPaused = false;
-            currentLap = 1;
-            checkpointsPassed = [];
-            
-            Composite.clear(engine.world);
-            car = null;
-            
-            document.getElementById('controls').style.display = 'block';
-            document.getElementById('hud').classList.add('hidden');
-            document.getElementById('game-over').classList.remove('active');
-            document.getElementById('mobile-controls').classList.remove('active');
-            document.getElementById('pause-btn').classList.remove('active');
-            
-            // Hide pause overlay if visible
-            if (pauseOverlay) {
-                pauseOverlay.style.display = 'none';
-            }
-            
-            processBtn.disabled = false;
-            startRaceBtn.disabled = true;
-            
-            status.innerHTML = '🔄 Reset! Capture a new desktop or generate track again.';
-            
-            // Reset camera view
-            Render.lookAt(render, {
-                min: { x: 0, y: 0 },
-                max: { x: window.innerWidth, y: window.innerHeight }
-            });
-        }
-
-        // ============================================
-        // PAUSE FUNCTIONALITY
-        // ============================================
-        
-        function togglePause() {
-            isPaused = !isPaused;
-            const pauseBtn = document.getElementById('pause-btn');
-            
-            if (isPaused) {
-                gameActive = false;
-                pauseBtn.textContent = '▶️ RESUME';
-                pauseBtn.style.background = 'linear-gradient(135deg, #4fc3f7 0%, #00bcd4 100%)';
-                
-                // Create pause overlay if it doesn't exist
-                if (!pauseOverlay) {
-                    pauseOverlay = document.createElement('div');
-                    pauseOverlay.style.cssText = `
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        background: rgba(0, 0, 0, 0.7);
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        z-index: 150;
-                        font-family: 'Courier New', monospace;
-                    `;
-                    pauseOverlay.innerHTML = `
-                        <div style="text-align: center; color: white;">
-                            <h1 style="font-size: clamp(2rem, 8vw, 4rem); color: #4fc3f7; text-shadow: 0 0 20px #4fc3f7, 0 0 40px #4fc3f7; margin-bottom: 2rem;">
-                                ⏸️ PAUSED
-                            </h1>
-                            <p style="font-size: clamp(1rem, 4vw, 1.5rem); margin-bottom: 2rem;">
-                                Press the button or ESC to continue
-                            </p>
-                        </div>
-                    `;
-                    document.body.appendChild(pauseOverlay);
-                } else {
-                    pauseOverlay.style.display = 'flex';
-                }
-            } else {
-                gameActive = true;
-                pauseBtn.textContent = '⏸️ PAUSE';
-                pauseBtn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)';
-                
-                if (pauseOverlay) {
-                    pauseOverlay.style.display = 'none';
-                }
-                
-                // Adjust times to account for pause
-                const pauseDuration = Date.now() - (startTime + (Date.now() - startTime));
-                startTime += pauseDuration;
-                lapStartTime += pauseDuration;
-            }
-        }
-
-        document.getElementById('pause-btn').addEventListener('click', togglePause);
-
-        // ESC key to pause/resume
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && gameActive) {
-                togglePause();
-            } else if (e.key === 'Escape' && isPaused) {
-                togglePause();
-            }
-        });
-
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
-        
-        function formatTime(ms) {
-            const minutes = Math.floor(ms / 60000);
-            const seconds = Math.floor((ms % 60000) / 1000);
-            const deciseconds = Math.floor((ms % 1000) / 100);
-            return `${minutes}:${seconds.toString().padStart(2, '0')}.${deciseconds}`;
-        }
-
-        function updateTimer() {
-            if (!gameActive) return;
-            const elapsed = Date.now() - startTime;
-            document.getElementById('timer').textContent = formatTime(elapsed);
-        }
-
-        setInterval(updateTimer, 100);
-
-        // ============================================
-        // GAME LOOP
-        // ============================================
-        
-        Events.on(engine, 'beforeUpdate', () => {
-            updateCar();
-        });
-
-        // Run the physics engine
-        Render.run(render);
-        const runner = Runner.create();
-        Runner.run(runner, engine);
-
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            render.canvas.width = window.innerWidth;
-            render.canvas.height = window.innerHeight;
-            render.options.width = window.innerWidth;
-            render.options.height = window.innerHeight;
-        });
-
-        // ============================================
-        // OPENCV INITIALIZATION
-        // ============================================
-        
-        window.onOpenCvReady = () => {
-            status.innerHTML = '✅ OpenCV Ready!';
-        };
-
-        var Module = {
-            onRuntimeInitialized: () => {
-                if (window.onOpenCvReady) window.onOpenCvReady();
-            }
-        };
     </script>
 </body>
 </html>
