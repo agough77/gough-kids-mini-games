@@ -713,11 +713,15 @@
         function update(dt) {
             if (!gameRunning || gamePaused) return;
             
-            // Acceleration
-            if (keys['ArrowUp'] || keys['w'] || touchX !== null) {
-                speed = Math.min(speed + acceleration * dt, maxSpeed);
-            } else {
-                speed = Math.max(speed - deceleration * dt, 0);
+            // Auto-acceleration (always moving forward)
+            speed = Math.min(speed + acceleration * dt * 10, maxSpeed);
+            
+            // Manual speed control
+            if (keys['ArrowUp'] || keys['w']) {
+                speed = Math.min(speed + acceleration * dt * 5, maxSpeed); // Extra boost
+            }
+            if (keys['ArrowDown'] || keys['s']) {
+                speed = Math.max(speed - deceleration * dt * 50, maxSpeed * 0.3); // Slow down but never stop
             }
             
             // Steering
