@@ -511,10 +511,19 @@
         // CAMERA SETUP
         // ============================================
         
+        let currentStream = null;
+        
         async function setupCamera() {
             try {
+                // Request initial permission to get camera labels
+                const initialStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                initialStream.getTracks().forEach(track => track.stop());
+                
+                // Now enumerate devices with labels available
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 cameras = devices.filter(device => device.kind === 'videoinput');
+                
+                status.innerHTML = `📹 Found ${cameras.length} camera${cameras.length !== 1 ? 's' : ''}. Select your camera below.`;
                 
                 cameraSelect.innerHTML = '';
                 cameras.forEach((camera, index) => {
@@ -529,25 +538,39 @@
                 
             } catch (err) {
                 console.error('Camera error:', err);
-                status.innerHTML = '❌ Camera access denied. Please enable camera permissions.';
+                status.innerHTML = '❌ Camera access denied. Please enable camera permissions in your browser settings.';
             }
         }
 
         async function switchCamera() {
             const deviceId = cameraSelect.value;
+            
+            // Stop previous stream
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+            }
+            
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: deviceId ? { exact: deviceId } : undefined }
-                });
+                const constraints = {
+                    video: {
+                        deviceId: deviceId ? { exact: deviceId } : undefined,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
                 
-                video.srcObject = stream;
-                videoPreview.srcObject = stream;
-                status.innerHTML = '✅ Camera ready! Frame your desktop and capture.';
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                video.srcObject = currentStream;
+                videoPreview.srcObject = currentStream;
+                
+                const selectedCamera = cameras.find(c => c.deviceId === deviceId);
+                status.innerHTML = `✅ Using: ${selectedCamera?.label || 'Selected Camera'}. Frame your desktop and capture.`;
                 snapBtn.disabled = false;
                 
             } catch (err) {
                 console.error('Stream error:', err);
-                status.innerHTML = '❌ Could not access camera.';
+                status.innerHTML = '❌ Could not access selected camera. Try another one.';
             }
         }
 
