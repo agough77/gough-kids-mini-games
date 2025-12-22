@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desktop Racing Reimagined</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script async src="https://docs.opencv.org/4.x/opencv.js" type="text/javascript"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #splash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+
+        #splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #splash-screen h1 {
+            font-size: 4rem;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        #splash-screen p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        #splash-screen .instructions {
+            background: rgba(0,0,0,0.3);
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        #splash-screen .instructions ul {
+            list-style-position: inside;
+            text-align: left;
+            margin-top: 1rem;
+            line-height: 1.8;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+        }
+
+        #controls h3 {
+            margin-bottom: 15px;
+            color: #4fc3f7;
+            font-size: 1.5rem;
+        }
+
+        #camera-container {
+            margin: 15px 0;
+            border: 3px solid #4fc3f7;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #video-preview {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .camera-select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 2px solid #4fc3f7;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 1rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        #snap {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        #process {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        #reset {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        #start-race {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            color: white;
+        }
+
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(79, 195, 247, 0.2);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            min-width: 250px;
+        }
+
+        #hud.hidden {
+            display: none;
+        }
+
+        .hud-item {
+            margin: 10px 0;
+            font-size: 1.2rem;
+        }
+
+        .hud-label {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+
+        .hud-value {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        #mobile-controls.active {
+            display: flex;
+        }
+
+        .mobile-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(79, 195, 247, 0.7);
+            border: 3px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .mobile-btn:active {
+            background: rgba(79, 195, 247, 1);
+            transform: scale(0.95);
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            display: none;
+            z-index: 100;
+        }
+
+        .controls-hint.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            display: none;
+            z-index: 200;
+        }
+
+        #game-over.active {
+            display: block;
+            animation: popIn 0.5s;
+        }
+
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        #game-over h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+        }
+
+        #game-over .stats {
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                font-size: 0.9rem;
+                padding: 15px;
+                max-width: 90%;
+            }
+            
+            button {
+                padding: 12px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <h1>🏎️ Desktop Racing Reimagined</h1>
+        <p>Turn Your Real Desktop into a Race Track!</p>
+        <div class="instructions">
+            <h3>🎮 How to Play:</h3>
+            <ul>
+                <li>📸 Point camera at your desk/table</li>
+                <li>🎯 Capture photo of objects (books, cups, etc.)</li>
+                <li>🏁 AI creates a race track from edges!</li>
+                <li>🚗 Drive: Arrow Keys / WASD</li>
+                <li>⚡ Complete laps as fast as possible</li>
+            </ul>
+        </div>
+        <button onclick="startSetup()" style="width: 300px; padding: 20px; font-size: 1.3rem; background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+            🏁 Start Racing!
+        </button>
+    </div>
+
+    <div id="controls">
+        <h3>🏁 Setup Track</h3>
+        
+        <select id="camera-select" class="camera-select">
+            <option>Loading cameras...</option>
+        </select>
+
+        <div id="camera-container">
+            <video id="video-preview" autoplay playsinline></video>
+        </div>
+
+        <button id="snap">📸 1. Capture Desktop</button>
+        <button id="process" disabled>🔮 2. Generate Track</button>
+        <button id="start-race" disabled>🏁 3. Start Race!</button>
+        <button id="reset">🔄 Reset</button>
+        
+        <div id="status">Loading OpenCV.js...</div>
+    </div>
+
+    <div id="hud" class="hidden">
+        <div class="hud-item">
+            <span class="hud-label">⏱️ Time:</span>
+            <div class="hud-value" id="timer">0:00.0</div>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">🏁 Lap:</span>
+            <div class="hud-value" id="lap">1 / 3</div>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">⚡ Speed:</span>
+            <div class="hud-value" id="speed">0</div>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">⭐ Best Lap:</span>
+            <div class="hud-value" id="best-lap">--:--.-</div>
+        </div>
+    </div>
+
+    <div class="controls-hint">
+        🎮 Controls: ⬅️ ⬆️ ➡️ or WASD
+    </div>
+
+    <div id="mobile-controls">
+        <div class="mobile-btn" id="btn-left">⬅️</div>
+        <div class="mobile-btn" id="btn-up">⬆️</div>
+        <div class="mobile-btn" id="btn-right">➡️</div>
+    </div>
+
+    <div id="game-over">
+        <h2>🏆 Race Complete!</h2>
+        <div class="stats">
+            <div>⏱️ Total Time: <span id="final-time">0:00.0</span></div>
+            <div>⚡ Best Lap: <span id="final-best">0:00.0</span></div>
+            <div>🏎️ Top Speed: <span id="final-speed">0</span></div>
+        </div>
+        <button onclick="resetGame()" style="margin-top: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            🔄 Race Again
+        </button>
+    </div>
+
+    <video id="video" width="640" height="480" autoplay playsinline style="display: none;"></video>
+    <canvas id="canvasOutput" width="640" height="480"></canvas>
+    <div id="game-container"></div>
+
+    <script>
+        // ============================================
+        // GLOBAL VARIABLES & SETUP
+        // ============================================
+        
+        const video = document.getElementById('video');
+        const videoPreview = document.getElementById('video-preview');
+        const canvas = document.getElementById('canvasOutput');
+        const snapBtn = document.getElementById('snap');
+        const processBtn = document.getElementById('process');
+        const startRaceBtn = document.getElementById('start-race');
+        const resetBtn = document.getElementById('reset');
+        const status = document.getElementById('status');
+        const cameraSelect = document.getElementById('camera-select');
+
+        let car = null;
+        let carStartX = 0;
+        let carStartY = 0;
+        let gameActive = false;
+        let startTime = 0;
+        let lapStartTime = 0;
+        let currentLap = 1;
+        let bestLapTime = Infinity;
+        let checkpointsPassed = [];
+        let totalLaps = 3;
+        let cameras = [];
+        let audioContext = null;
+        let engineSound = null;
+        
+        // Physics engine setup
+        const { Engine, Render, Runner, Bodies, Composite, Body, Events, Vector } = Matter;
+        const engine = Engine.create();
+        engine.gravity.y = 0; // Top-down view, no gravity
+        
+        const render = Render.create({
+            element: document.getElementById('game-container'),
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: '#1a1a2e'
+            }
+        });
+
+        // ============================================
+        // AUDIO SYSTEM
+        // ============================================
+        
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function playSound(frequency, duration = 0.1, type = 'sine') {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playEngineSound(speed) {
+            if (!audioContext || !gameActive) return;
+            const baseFreq = 50;
+            const freq = baseFreq + (speed * 2);
+            playSound(freq, 0.05, 'sawtooth');
+        }
+
+        function playCollisionSound() {
+            playSound(200, 0.2, 'square');
+        }
+
+        function playCheckpointSound() {
+            playSound(800, 0.1, 'sine');
+            setTimeout(() => playSound(1000, 0.1, 'sine'), 100);
+        }
+
+        // ============================================
+        // CAMERA SETUP
+        // ============================================
+        
+        async function setupCamera() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                cameras = devices.filter(device => device.kind === 'videoinput');
+                
+                cameraSelect.innerHTML = '';
+                cameras.forEach((camera, index) => {
+                    const option = document.createElement('option');
+                    option.value = camera.deviceId;
+                    option.text = camera.label || `Camera ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+
+                cameraSelect.addEventListener('change', switchCamera);
+                await switchCamera();
+                
+            } catch (err) {
+                console.error('Camera error:', err);
+                status.innerHTML = '❌ Camera access denied. Please enable camera permissions.';
+            }
+        }
+
+        async function switchCamera() {
+            const deviceId = cameraSelect.value;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: deviceId ? { exact: deviceId } : undefined }
+                });
+                
+                video.srcObject = stream;
+                videoPreview.srcObject = stream;
+                status.innerHTML = '✅ Camera ready! Frame your desktop and capture.';
+                snapBtn.disabled = false;
+                
+            } catch (err) {
+                console.error('Stream error:', err);
+                status.innerHTML = '❌ Could not access camera.';
+            }
+        }
+
+        function startSetup() {
+            document.getElementById('splash-screen').classList.add('hidden');
+            setupCamera();
+            initAudio();
+        }
+
+        // ============================================
+        // IMAGE CAPTURE & PROCESSING
+        // ============================================
+        
+        snapBtn.addEventListener('click', () => {
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, 640, 480);
+            status.innerHTML = '📸 Photo captured! Now click Generate Track.';
+            processBtn.disabled = false;
+            playCheckpointSound();
+        });
+
+        processBtn.addEventListener('click', generateTrack);
+
+        function generateTrack() {
+            status.innerHTML = '🔮 Analyzing desktop... Creating physics world...';
+            
+            // Clear existing world
+            Composite.clear(engine.world);
+            checkpointsPassed = [];
+            
+            try {
+                // Read image from canvas
+                let src = cv.imread(canvas);
+                let dst = new cv.Mat();
+                let contourImg = new cv.Mat();
+                
+                // Convert to gray & apply Canny edge detection
+                cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+                cv.GaussianBlur(src, src, new cv.Size(5, 5), 0);
+                cv.Canny(src, dst, 30, 100, 3, false);
+                
+                // Dilate to make edges thicker/more connected
+                let kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+                cv.dilate(dst, dst, kernel);
+                
+                // Find contours
+                let contours = new cv.MatVector();
+                let hierarchy = new cv.Mat();
+                cv.findContours(dst, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+                let trackBodies = 0;
+                const scaleX = window.innerWidth / 640;
+                const scaleY = window.innerHeight / 480;
+                
+                // Convert contours to physics bodies
+                for (let i = 0; i < contours.size(); i++) {
+                    let contour = contours.get(i);
+                    let area = cv.contourArea(contour);
+                    
+                    // Only use significant contours
+                    if (area < 500 || area > 100000) continue;
+                    
+                    let points = [];
+                    for (let j = 0; j < contour.data32S.length; j += 2) {
+                        points.push({
+                            x: contour.data32S[j] * scaleX,
+                            y: contour.data32S[j + 1] * scaleY
+                        });
+                    }
+                    
+                    // Simplify points
+                    if (points.length > 50) {
+                        const step = Math.floor(points.length / 30);
+                        points = points.filter((p, idx) => idx % step === 0);
+                    }
+                    
+                    if (points.length > 5) {
+                        try {
+                            const obstacle = Bodies.fromVertices(0, 0, [points], {
+                                isStatic: true,
+                                render: {
+                                    fillStyle: `hsl(${trackBodies * 30}, 70%, 50%)`,
+                                    strokeStyle: '#fff',
+                                    lineWidth: 2
+                                },
+                                friction: 0.8,
+                                restitution: 0.3
+                            }, true);
+                            
+                            if (obstacle) {
+                                Composite.add(engine.world, obstacle);
+                                trackBodies++;
+                            }
+                        } catch (e) {
+                            console.log('Skipped complex contour');
+                        }
+                    }
+                }
+                
+                // Add boundary walls
+                addBoundaryWalls();
+                
+                // Add start/finish line and checkpoints
+                addCheckpoints();
+                
+                // Add car at start position
+                createCar();
+                
+                // Cleanup
+                src.delete();
+                dst.delete();
+                contours.delete();
+                hierarchy.delete();
+                kernel.delete();
+                
+                status.innerHTML = `✅ Track generated with ${trackBodies} obstacles! Ready to race!`;
+                startRaceBtn.disabled = false;
+                playCheckpointSound();
+                
+            } catch (error) {
+                console.error('Track generation error:', error);
+                status.innerHTML = '❌ Error generating track. Try capturing again with better lighting.';
+            }
+        }
+
+        function addBoundaryWalls() {
+            const thickness = 50;
+            const walls = [
+                Bodies.rectangle(window.innerWidth / 2, -thickness / 2, window.innerWidth, thickness, {
+                    isStatic: true,
+                    render: { fillStyle: '#ff4444' }
+                }),
+                Bodies.rectangle(window.innerWidth / 2, window.innerHeight + thickness / 2, window.innerWidth, thickness, {
+                    isStatic: true,
+                    render: { fillStyle: '#ff4444' }
+                }),
+                Bodies.rectangle(-thickness / 2, window.innerHeight / 2, thickness, window.innerHeight, {
+                    isStatic: true,
+                    render: { fillStyle: '#ff4444' }
+                }),
+                Bodies.rectangle(window.innerWidth + thickness / 2, window.innerHeight / 2, thickness, window.innerHeight, {
+                    isStatic: true,
+                    render: { fillStyle: '#ff4444' }
+                })
+            ];
+            
+            Composite.add(engine.world, walls);
+        }
+
+        function addCheckpoints() {
+            const startLine = Bodies.rectangle(100, window.innerHeight / 2, 10, 100, {
+                isStatic: true,
+                isSensor: true,
+                render: { fillStyle: '#00ff00', opacity: 0.5 },
+                label: 'checkpoint-start'
+            });
+            
+            const checkpoint1 = Bodies.rectangle(window.innerWidth / 2, 100, 100, 10, {
+                isStatic: true,
+                isSensor: true,
+                render: { fillStyle: '#ffff00', opacity: 0.5 },
+                label: 'checkpoint-1'
+            });
+            
+            const checkpoint2 = Bodies.rectangle(window.innerWidth - 100, window.innerHeight / 2, 10, 100, {
+                isStatic: true,
+                isSensor: true,
+                render: { fillStyle: '#ff00ff', opacity: 0.5 },
+                label: 'checkpoint-2'
+            });
+            
+            Composite.add(engine.world, [startLine, checkpoint1, checkpoint2]);
+        }
+
+        // ============================================
+        // CAR CREATION & PHYSICS
+        // ============================================
+        
+        function createCar() {
+            carStartX = 150;
+            carStartY = window.innerHeight / 2;
+            
+            // Car body (main rectangle)
+            const carBody = Bodies.rectangle(carStartX, carStartY, 60, 40, {
+                render: {
+                    fillStyle: '#ff4444',
+                    strokeStyle: '#fff',
+                    lineWidth: 3
+                },
+                friction: 0.1,
+                frictionAir: 0.05,
+                restitution: 0.3,
+                density: 0.002,
+                label: 'car'
+            });
+            
+            car = carBody;
+            Composite.add(engine.world, car);
+        }
+
+        // ============================================
+        // CONTROLS
+        // ============================================
+        
+        const keys = {};
+        
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (gameActive && audioContext) {
+                audioContext.resume();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Mobile controls
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            ['btn-left', 'btn-right', 'btn-up'].forEach(id => {
+                const btn = document.getElementById(id);
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (id === 'btn-left') keys['ArrowLeft'] = true;
+                    if (id === 'btn-right') keys['ArrowRight'] = true;
+                    if (id === 'btn-up') keys['ArrowUp'] = true;
+                });
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (id === 'btn-left') keys['ArrowLeft'] = false;
+                    if (id === 'btn-right') keys['ArrowRight'] = false;
+                    if (id === 'btn-up') keys['ArrowUp'] = false;
+                });
+            });
+        }
+
+        function updateCar() {
+            if (!car || !gameActive) return;
+            
+            const force = 0.001;
+            const turnForce = 0.00008;
+            const maxSpeed = 10;
+            
+            // Get car velocity
+            const velocity = car.velocity;
+            const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
+            
+            // Forward/Backward (W/S or Up/Down)
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                const angle = car.angle;
+                Body.applyForce(car, car.position, {
+                    x: Math.cos(angle) * force,
+                    y: Math.sin(angle) * force
+                });
+                if (speed < 8) playEngineSound(speed);
+            }
+            
+            if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                const angle = car.angle;
+                Body.applyForce(car, car.position, {
+                    x: -Math.cos(angle) * force * 0.5,
+                    y: -Math.sin(angle) * force * 0.5
+                });
+            }
+            
+            // Turning (A/D or Left/Right)
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                Body.setAngularVelocity(car, -0.1);
+            }
+            
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                Body.setAngularVelocity(car, 0.1);
+            }
+            
+            // Speed limit
+            if (speed > maxSpeed) {
+                Body.setVelocity(car, {
+                    x: velocity.x * (maxSpeed / speed),
+                    y: velocity.y * (maxSpeed / speed)
+                });
+            }
+            
+            // Update HUD
+            document.getElementById('speed').textContent = Math.round(speed * 10);
+            
+            // Camera follow
+            const camX = car.position.x - window.innerWidth / 2;
+            const camY = car.position.y - window.innerHeight / 2;
+            
+            Render.lookAt(render, {
+                min: { x: camX, y: camY },
+                max: { x: camX + window.innerWidth, y: camY + window.innerHeight }
+            });
+        }
+
+        // ============================================
+        // COLLISION & CHECKPOINT DETECTION
+        // ============================================
+        
+        Events.on(engine, 'collisionStart', (event) => {
+            event.pairs.forEach(pair => {
+                const { bodyA, bodyB } = pair;
+                
+                // Check for checkpoint collisions
+                if ((bodyA.label === 'car' && bodyB.label && bodyB.label.startsWith('checkpoint')) ||
+                    (bodyB.label === 'car' && bodyA.label && bodyA.label.startsWith('checkpoint'))) {
+                    
+                    const checkpoint = bodyA.label?.startsWith('checkpoint') ? bodyA.label : bodyB.label;
+                    handleCheckpoint(checkpoint);
+                }
+                
+                // Play collision sound for obstacles
+                if ((bodyA.label === 'car' || bodyB.label === 'car') && gameActive) {
+                    if (!bodyA.isSensor && !bodyB.isSensor) {
+                        playCollisionSound();
+                    }
+                }
+            });
+        });
+
+        function handleCheckpoint(checkpoint) {
+            if (!gameActive) return;
+            
+            if (checkpoint === 'checkpoint-start') {
+                if (checkpointsPassed.includes('checkpoint-1') && checkpointsPassed.includes('checkpoint-2')) {
+                    // Complete lap
+                    completeLap();
+                    checkpointsPassed = [];
+                }
+            } else if (!checkpointsPassed.includes(checkpoint)) {
+                checkpointsPassed.push(checkpoint);
+                playCheckpointSound();
+                status.innerHTML = `✅ Checkpoint ${checkpointsPassed.length}/2 passed!`;
+            }
+        }
+
+        function completeLap() {
+            const lapTime = Date.now() - lapStartTime;
+            const lapSeconds = (lapTime / 1000).toFixed(1);
+            
+            if (lapTime < bestLapTime) {
+                bestLapTime = lapTime;
+                document.getElementById('best-lap').textContent = formatTime(bestLapTime);
+            }
+            
+            playCheckpointSound();
+            setTimeout(() => playCheckpointSound(), 150);
+            
+            currentLap++;
+            document.getElementById('lap').textContent = `${currentLap} / ${totalLaps}`;
+            
+            if (currentLap > totalLaps) {
+                endRace();
+            } else {
+                status.innerHTML = `🏁 Lap ${currentLap - 1} complete! Time: ${lapSeconds}s`;
+                lapStartTime = Date.now();
+            }
+        }
+
+        // ============================================
+        // RACE MANAGEMENT
+        // ============================================
+        
+        startRaceBtn.addEventListener('click', startRace);
+
+        function startRace() {
+            gameActive = true;
+            startTime = Date.now();
+            lapStartTime = Date.now();
+            currentLap = 1;
+            bestLapTime = Infinity;
+            checkpointsPassed = [];
+            
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('hud').classList.remove('hidden');
+            document.querySelector('.controls-hint').classList.add('active');
+            
+            if (isMobile) {
+                document.getElementById('mobile-controls').classList.add('active');
+            }
+            
+            setTimeout(() => {
+                document.querySelector('.controls-hint').classList.remove('active');
+            }, 5000);
+            
+            status.innerHTML = '🏁 Race started! Complete 3 laps!';
+            playCheckpointSound();
+        }
+
+        function endRace() {
+            gameActive = false;
+            const totalTime = Date.now() - startTime;
+            const maxSpeed = document.getElementById('speed').textContent;
+            
+            document.getElementById('final-time').textContent = formatTime(totalTime);
+            document.getElementById('final-best').textContent = formatTime(bestLapTime);
+            document.getElementById('final-speed').textContent = maxSpeed;
+            document.getElementById('game-over').classList.add('active');
+            
+            playCheckpointSound();
+            setTimeout(() => playCheckpointSound(), 100);
+            setTimeout(() => playCheckpointSound(), 200);
+        }
+
+        resetBtn.addEventListener('click', resetGame);
+
+        function resetGame() {
+            gameActive = false;
+            currentLap = 1;
+            checkpointsPassed = [];
+            
+            Composite.clear(engine.world);
+            car = null;
+            
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('hud').classList.add('hidden');
+            document.getElementById('game-over').classList.remove('active');
+            document.getElementById('mobile-controls').classList.remove('active');
+            
+            processBtn.disabled = false;
+            startRaceBtn.disabled = true;
+            
+            status.innerHTML = '🔄 Reset! Capture a new desktop or generate track again.';
+            
+            // Reset camera view
+            Render.lookAt(render, {
+                min: { x: 0, y: 0 },
+                max: { x: window.innerWidth, y: window.innerHeight }
+            });
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function formatTime(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            const deciseconds = Math.floor((ms % 1000) / 100);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}.${deciseconds}`;
+        }
+
+        function updateTimer() {
+            if (!gameActive) return;
+            const elapsed = Date.now() - startTime;
+            document.getElementById('timer').textContent = formatTime(elapsed);
+        }
+
+        setInterval(updateTimer, 100);
+
+        // ============================================
+        // GAME LOOP
+        // ============================================
+        
+        Events.on(engine, 'beforeUpdate', () => {
+            updateCar();
+        });
+
+        // Run the physics engine
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            render.canvas.width = window.innerWidth;
+            render.canvas.height = window.innerHeight;
+            render.options.width = window.innerWidth;
+            render.options.height = window.innerHeight;
+        });
+
+        // ============================================
+        // OPENCV INITIALIZATION
+        // ============================================
+        
+        window.onOpenCvReady = () => {
+            status.innerHTML = '✅ OpenCV Ready!';
+        };
+
+        var Module = {
+            onRuntimeInitialized: () => {
+                if (window.onOpenCvReady) window.onOpenCvReady();
+            }
+        };
+    </script>
+</body>
+</html>
