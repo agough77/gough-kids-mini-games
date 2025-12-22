@@ -543,8 +543,58 @@
                         y: hill
                     });
                 }
+            } else if (currentTrack === 'desert') {
+                // Desert: Long straights with gentle sweeping curves
+                for (let i = 0; i < 500; i++) {
+                    const curve = Math.sin(i / 40) * 0.4; // Gentle long curves
+                    const hill = Math.sin(i / 50) * 200; // Gentle rolling hills
+                    roadSegments.push({
+                        index: i,
+                        curve: curve,
+                        y: hill
+                    });
+                }
+            } else if (currentTrack === 'city') {
+                // City: Sharp turns and quick direction changes
+                for (let i = 0; i < 500; i++) {
+                    let curve = 0;
+                    // Create sharp corners every 30 segments
+                    if (i % 30 < 10) {
+                        curve = 0.6;
+                    } else if (i % 30 < 20) {
+                        curve = -0.6;
+                    }
+                    const hill = 0; // Flat city streets
+                    roadSegments.push({
+                        index: i,
+                        curve: curve,
+                        y: hill
+                    });
+                }
+            } else if (currentTrack === 'mountain') {
+                // Mountain: Steep hills with hairpin curves
+                for (let i = 0; i < 500; i++) {
+                    const curve = Math.sin(i / 15) * 0.7; // Tight hairpin turns
+                    const hill = Math.sin(i / 25) * 800; // Steep elevation changes
+                    roadSegments.push({
+                        index: i,
+                        curve: curve,
+                        y: hill
+                    });
+                }
+            } else if (currentTrack === 'night') {
+                // Night City: Moderate curves with some elevation
+                for (let i = 0; i < 500; i++) {
+                    const curve = Math.sin(i / 18) * 0.5 + Math.cos(i / 12) * 0.3; // Complex curves
+                    const hill = Math.sin(i / 35) * 300; // Moderate hills
+                    roadSegments.push({
+                        index: i,
+                        curve: curve,
+                        y: hill
+                    });
+                }
             } else {
-                // Standard procedural tracks
+                // Default track
                 for (let i = 0; i < 500; i++) {
                     const curve = Math.sin(i / 20) * 0.3;
                     const hill = Math.sin(i / 30) * 500;
