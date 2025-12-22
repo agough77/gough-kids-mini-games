@@ -16,16 +16,45 @@
             font-size: 1.5vmin;
         }
 
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0.2rem 0.2rem 0.4rem rgba(0,0,0,0.2), 0 0 20px rgba(2,119,189,0.5); }
+            50% { text-shadow: 0.2rem 0.2rem 0.4rem rgba(0,0,0,0.2), 0 0 40px rgba(2,119,189,0.8); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to top, 
-                #FFE5B4 0%,
-                #FFB347 20%,
-                #FF9A8B 40%,
-                #FF6FA0 60%,
-                #87CEEB 80%,
-                #B0E0E6 100%);
-            background-attachment: fixed;
+            background: linear-gradient(-45deg, 
+                #FFE5B4, #FFB347, #FF9A8B, #FF6FA0, 
+                #87CEEB, #B0E0E6, #9D50BB, #6E48AA);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -33,6 +62,7 @@
             justify-content: center;
             padding: 1.25rem;
             user-select: none;
+            overflow-x: hidden;
         }
 
         h1 {
@@ -40,102 +70,156 @@
             font-size: 4rem;
             text-align: center;
             margin-bottom: 1rem;
-            text-shadow: 0.2rem 0.2rem 0.4rem rgba(0,0,0,0.2);
+            animation: glow 3s ease-in-out infinite, float 3s ease-in-out infinite;
+            font-weight: 900;
         }
 
         .subtitle {
-            color: #ff9800;
-            font-size: 1.5rem;
+            color: #ff6600;
+            font-size: 1.8rem;
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
             font-weight: bold;
+            text-shadow: 0 2px 10px rgba(255, 102, 0, 0.5);
+            animation: pulse 2s ease-in-out infinite;
         }
 
         .games-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-            gap: 1.25rem;
-            max-width: 80rem;
+            grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+            gap: 2rem;
+            max-width: 90rem;
             width: 100%;
             padding: 0 0.625rem;
+            animation: slideInUp 0.8s ease-out;
         }
 
         .game-card {
-            background: white;
-            border-radius: 1.25rem;
-            padding: 2rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+            border-radius: 2rem;
+            padding: 2.5rem;
             text-align: center;
-            box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.2);
-            border: 0.3rem solid #4fc3f7;
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 1rem 3rem rgba(0,0,0,0.3);
+            border: 0.4rem solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #4fc3f7, #ff6fa0, #ffb347, #87ceeb);
+            border-radius: 2rem;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
         }
 
         .game-card:hover {
-            transform: translateY(-0.625rem);
-            box-shadow: 0 1rem 2.5rem rgba(0,0,0,0.3);
+            transform: translateY(-1rem) scale(1.02);
+            box-shadow: 0 1.5rem 4rem rgba(0,0,0,0.4);
+        }
+
+        .game-card:active {
+            transform: translateY(-0.5rem) scale(0.98);
         }
 
         .game-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
         }
 
         .game-title {
             color: #0277bd;
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.8rem;
+            font-weight: 900;
             margin-bottom: 1rem;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .game-description {
-            color: #666;
-            font-size: 1rem;
-            line-height: 1.5;
+            color: #555;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        .game-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4fc3f7, #0277bd);
+            color: white;
+            padding: 0.4rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
         }
 
         .coming-soon {
-            opacity: 0.6;
+            opacity: 0.7;
             cursor: not-allowed;
-            border-color: #ccc;
+            filter: grayscale(30%);
         }
 
         .coming-soon:hover {
             transform: none;
-            box-shadow: 0 0.625rem 1.875rem rgba(0,0,0,0.2);
+            box-shadow: 0 1rem 3rem rgba(0,0,0,0.3);
+        }
+
+        .coming-soon:hover::before {
+            opacity: 0;
         }
 
         .coming-soon-badge {
             display: inline-block;
-            background: #ff9800;
+            background: linear-gradient(135deg, #ff9800, #ff6600);
             color: white;
-            padding: 0.3rem 1rem;
-            border-radius: 1.25rem;
-            font-size: 0.8rem;
+            padding: 0.4rem 1.2rem;
+            border-radius: 2rem;
+            font-size: 0.85rem;
             font-weight: bold;
-            margin-top: 0.625rem;
+            margin-top: 1rem;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
         }
 
         footer {
-            margin-top: 2rem;
-            color: #0277bd;
-            font-size: 1.1rem;
+            margin-top: 3rem;
+            color: white;
+            font-size: 1.3rem;
             text-align: center;
-            padding: 0.625rem;
+            padding: 1rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            font-weight: 600;
         }
 
         .version-display {
             position: fixed;
             bottom: 1rem;
             left: 1rem;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.1);
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #666;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0.7rem 1.3rem;
+            border-radius: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0277bd;
             z-index: 1000;
+            border: 3px solid #4fc3f7;
+            animation: pulse 3s ease-in-out infinite;
         }
 
         a {
@@ -178,30 +262,50 @@
 
     <div class="games-container">
         <a href="pop-and-learn/">
-            <div class="game-card">
+            <div class="game-card" style="animation-delay: 0.1s;">
                 <div class="game-icon">🎈</div>
                 <div class="game-title">Pop & Learn ABCs</div>
                 <div class="game-description">
                     Learn letters, numbers, colors, and shapes by popping balloons and bubbles!
-                    <br><br>
-                    Ages 1-3 • Multi-player
                 </div>
+                <div class="game-badge">Ages 1-3 • Multi-player</div>
             </div>
         </a>
 
         <a href="desktop-racing-reimagined/">
-            <div class="game-card">
+            <div class="game-card" style="animation-delay: 0.2s;">
                 <div class="game-icon">🏎️</div>
                 <div class="game-title">Desktop Racing Reimagined</div>
                 <div class="game-description">
                     Turn your real desktop into a race track! AI-powered camera creates tracks from your desk objects.
-                    <br><br>
-                    Ages 6+ • Camera Required
                 </div>
+                <div class="game-badge">Ages 6+ • Camera Required</div>
             </div>
         </a>
 
-        <div class="game-card coming-soon">
+        <a href="raptor-chase/">
+            <div class="game-card" style="animation-delay: 0.3s;">
+                <div class="game-icon">🦖</div>
+                <div class="game-title">Raptor Chase</div>
+                <div class="game-description">
+                    Survive the prehistoric predators! Navigate through 11 unique environments while dodging raptors.
+                </div>
+                <div class="game-badge">Ages 8+ • Survival Action</div>
+            </div>
+        </a>
+
+        <a href="raptor-destroy/">
+            <div class="game-card" style="animation-delay: 0.4s;">
+                <div class="game-icon">🚀</div>
+                <div class="game-title">Raptor Destroy</div>
+                <div class="game-description">
+                    Vertical scrolling shooter! Blast through waves of raptors and collect powerful weapons.
+                </div>
+                <div class="game-badge">Ages 8+ • Arcade Shooter</div>
+            </div>
+        </a>
+
+        <div class="game-card coming-soon" style="animation-delay: 0.5s;">
             <div class="game-icon">🎯</div>
             <div class="game-title">Coming Soon!</div>
             <div class="game-description">
@@ -210,7 +314,7 @@
             </div>
         </div>
 
-        <div class="game-card coming-soon">
+        <div class="game-card coming-soon" style="animation-delay: 0.6s;">
             <div class="game-icon">🎨</div>
             <div class="game-title">Coming Soon!</div>
             <div class="game-description">
@@ -224,6 +328,6 @@
         Made with ❤️ for the Gough Kids
     </footer>
 
-    <div class="version-display">v4.0.0 Desktop Racing</div>
+    <div class="version-display">v5.0.0 Complete Collection</div>
 </body>
 </html>
